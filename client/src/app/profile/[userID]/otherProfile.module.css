@@ -1,0 +1,52 @@
+.container {
+  min-height: 100vh;
+}
+
+.userWrapper {
+  text-align: center;
+  padding: 2rem;
+  margin-top: 80px;
+}
+
+.userImage img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.name {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-top: 1rem;
+}
+
+.about {
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+.followBtn {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background: #007bff;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 1rem auto;
+  text-align: center;
+}
+
+.followBtn:hover {
+  background: #0056b3;
+}
+
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 2rem 0;
+  font-size: 1.1rem;
+}

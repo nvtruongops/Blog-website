@@ -1,0 +1,24 @@
+.breaker {
+  text-align: center;
+  padding: 1.5rem 2rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  margin: 1.5rem 0;
+}
+
+.breaker h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--green-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.breaker h2::before,
+.breaker h2::after {
+  content: '✦';
+  font-size: 0.75rem;
+  color: var(--brown-light);
+}

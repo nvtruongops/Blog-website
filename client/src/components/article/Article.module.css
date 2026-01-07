@@ -1,0 +1,205 @@
+.wrapper {
+  margin-top: 80px;
+}
+
+.article {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: white;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.userImage img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.userSide {
+  flex: 1;
+}
+
+.userName {
+  display: block;
+  font-weight: bold;
+  color: #333;
+  text-decoration: none;
+}
+
+.userAbout {
+  color: #666;
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+.followBtn {
+  padding: 0.5rem 1rem;
+  background: #007bff;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.icon {
+  cursor: pointer;
+  color: #666;
+  transition: color 0.3s;
+}
+
+.icon:hover {
+  color: #007bff;
+}
+
+.iconActive {
+  cursor: pointer;
+  color: #007bff;
+}
+
+.menuWrapper {
+  position: relative;
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 0.5rem;
+  z-index: 10;
+}
+
+.reportBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #dc3545;
+}
+
+.modal {
+  padding: 2rem;
+  text-align: center;
+}
+
+.modal input {
+  width: 100%;
+  padding: 0.75rem;
+  margin: 1rem 0;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.modal button {
+  padding: 0.75rem 2rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.title {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.meta {
+  color: #666;
+  font-size: 0.875rem;
+  display: block;
+  margin-bottom: 1.5rem;
+}
+
+.imageWrapper {
+  margin-bottom: 1.5rem;
+}
+
+.imageWrapper img {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.content {
+  line-height: 1.8;
+  color: #333;
+}
+
+.content img {
+  max-width: 100%;
+  border-radius: 5px;
+}
+
+.comments {
+  margin-top: 2rem;
+}
+
+.comments h3 {
+  cursor: pointer;
+  color: #007bff;
+  margin-bottom: 1rem;
+}
+
+.addComment textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  min-height: 100px;
+  margin-bottom: 0.5rem;
+}
+
+.addComment button {
+  padding: 0.5rem 1.5rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.commentItem {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.commentItem img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.commentItem a {
+  font-weight: bold;
+  color: #333;
+}
+
+.commentItem span {
+  color: #999;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+}
+
+.commentItem p {
+  margin-top: 0.5rem;
+  color: #666;
+}

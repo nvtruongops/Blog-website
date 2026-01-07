@@ -1,0 +1,121 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.authWrapper {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.img {
+  margin-bottom: 1rem;
+}
+
+.img img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+}
+
+.img span {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-top: 0.5rem;
+}
+
+.loginCont {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.tab {
+  cursor: pointer;
+  padding: 0.5rem;
+  color: #666;
+}
+
+.socialGoogle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 1rem 0;
+}
+
+.socialGoogle img {
+  width: 20px;
+  height: 20px;
+}
+
+.input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin: 0.5rem 0;
+}
+
+.input input {
+  border: none;
+  outline: none;
+  flex: 1;
+}
+
+.error {
+  color: red;
+  font-size: 0.875rem;
+  display: block;
+  margin: 0.5rem 0;
+}
+
+.success {
+  color: green;
+  font-size: 0.875rem;
+  display: block;
+  margin: 0.5rem 0;
+}
+
+.dialogue {
+  font-size: 0.75rem;
+  color: #666;
+  margin: 1rem 0;
+}
+
+.forget {
+  margin: 1rem 0;
+}
+
+.forget a {
+  color: #007bff;
+}
+
+.footer {
+  background: #007bff;
+  color: white;
+  padding: 0.75rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.footer:hover {
+  background: #0056b3;
+}
