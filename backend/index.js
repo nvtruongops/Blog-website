@@ -52,14 +52,16 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.set("trust proxy", 1)
 app.use(cookieParser())
 app.use(session({
+  store: store,
   proxy: true,
   secret: keys.COOKIE_KEY,
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
+  rolling: true, // Refresh session expiry on each request
   cookie: {
-    maxAge: 15 * 24 * 60 * 60 * 1000, // Uncomment if needed for cookie lifespan
-    sameSite: process.env.NODE_ENV === 'production' ? "none" : "lax", // "none" for cross-site cookies in production
-    secure: process.env.NODE_ENV === 'production', // Secure should be true in production (HTTPS)
+    maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+    sameSite: process.env.NODE_ENV === 'production' ? "none" : "lax",
+    secure: process.env.NODE_ENV === 'production',
   },
 }))
 

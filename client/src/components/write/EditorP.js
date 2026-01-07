@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import dynamic from 'next/dynamic';
@@ -8,7 +8,10 @@ import axios from 'axios';
 import { uploadImages, dataURItoBlob } from '@/lib/api';
 import styles from './Editor.module.css';
 
-const JoditEditor = dynamic(() => import('jodit-react'), { ssr: false });
+const JoditEditor = dynamic(() => import('jodit-react'), { 
+  ssr: false,
+  loading: () => <p>Loading editor...</p>
+});
 
 const categories = ['food', 'travelling', 'lifestyle', 'tech'];
 
@@ -16,6 +19,7 @@ export default function EditorP({ post, pflag }) {
   const router = useRouter();
   const user = useSelector((state) => state.user);
   const editor = useRef(null);
+  const [mounted, setMounted] = useState(false);
 
   const [title, setTitle] = useState(post?.title || '');
   const [description, setDescription] = useState(post?.description || '');
@@ -26,20 +30,32 @@ export default function EditorP({ post, pflag }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const config = useMemo(() => ({
     readonly: false,
     placeholder: 'Start writing your blog...',
     height: 400,
+    uploader: {
+      insertImageAsBase64URI: true
+    }
   }), []);
 
   const handleImageChange = (e) => {
     if (e.target.files.length) {
       const file = e.target.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size should be less than 5MB');
+        return;
+      }
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = (event) => {
         setNewImage(event.target.result);
         setImage('');
+        setError('');
       };
     }
   };
@@ -47,8 +63,20 @@ export default function EditorP({ post, pflag }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!title || !description || !content || (!image && !newImage)) {
-      setError('All fields are required');
+    if (!title.trim()) {
+      setError('Title is required');
+      return;
+    }
+    if (!description.trim()) {
+      setError('Description is required');
+      return;
+    }
+    if (!content.trim()) {
+      setError('Content is required');
+      return;
+    }
+    if (!image && !newImage) {
+      setError('Cover image is required');
       return;
     }
 
@@ -66,6 +94,10 @@ export default function EditorP({ post, pflag }) {
         formData.append('file', img);
 
         const uploadedImage = await uploadImages(formData, user.token);
+        
+        if (!uploadedImage || !uploadedImage[0]?.url) {
+          throw new Error('Failed to upload image');
+        }
         imageUrl = uploadedImage[0].url;
       }
 
@@ -73,8 +105,8 @@ export default function EditorP({ post, pflag }) {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/editPost`,
         {
           id: post._id,
-          title,
-          description,
+          title: title.trim(),
+          description: description.trim(),
           content,
           category,
           image: imageUrl,
@@ -84,11 +116,16 @@ export default function EditorP({ post, pflag }) {
 
       router.push(`/article/${post._id}`);
     } catch (error) {
-      setError(error.response?.data?.message || 'Error updating post');
+      console.error('Post update error:', error);
+      setError(error.response?.data?.message || error.message || 'Error updating post');
     } finally {
       setLoading(false);
     }
   };
+
+  if (!mounted) {
+    return <div className={styles.container}><p>Loading...</p></div>;
+  }
 
   return (
     <div className={styles.container}>

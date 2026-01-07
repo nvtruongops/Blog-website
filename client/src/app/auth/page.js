@@ -8,6 +8,7 @@ import axios from 'axios';
 import { TfiEmail } from 'react-icons/tfi';
 import { CiLock } from 'react-icons/ci';
 import { TiUser } from 'react-icons/ti';
+import { IoArrowBack } from 'react-icons/io5';
 import Link from 'next/link';
 import { login } from '@/store/slices/userSlice';
 import { checkifverify, sendmail, checkotpv } from '@/lib/api';
@@ -117,72 +118,81 @@ export default function AuthPage() {
     window.open(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/google`, '_self');
   };
 
+  const switchTab = (newState) => {
+    setState(newState);
+    setError('');
+    setSuccess('');
+    setShowOtp(false);
+  };
+
   return (
     <div className={styles.container}>
+      {/* Decorative Elements */}
+      <span className={`${styles.decoration} ${styles.decorationLeft}`}>✦</span>
+      <span className={`${styles.decoration} ${styles.decorationRight}`}>✦</span>
+      <span className={`${styles.decoration} ${styles.decorationBottom}`}>❋</span>
+      <span className={`${styles.decoration} ${styles.decorationBottomRight}`}>✦</span>
+
       <div className={styles.authWrapper}>
         <div className={styles.img}>
-          <img src="/sp.gif" alt="auth" />
-          <span>{state}</span>
+          <img src="/logo.png" alt="auth" />
+          <span>{state === 'Log In' ? 'Welcome Back' : 'Join Us'}</span>
         </div>
+
+        {/* Tab Navigation */}
         <div className={styles.loginCont}>
           <div
-            className={styles.tab}
-            style={{
-              borderBottom: state === 'Log In' ? '2px solid black' : '',
-              color: state === 'Log In' ? 'black' : '',
-            }}
-            onClick={() => { setState('Log In'); setError(''); }}
+            className={`${styles.tab} ${state === 'Log In' ? styles.tabActive : ''}`}
+            onClick={() => switchTab('Log In')}
           >
             Log In
           </div>
           <div
-            className={styles.tab}
-            style={{
-              borderBottom: state === 'Sign Up' ? '2px solid black' : '',
-              color: state === 'Sign Up' ? 'black' : '',
-            }}
-            onClick={() => { setState('Sign Up'); setError(''); }}
+            className={`${styles.tab} ${state === 'Sign Up' ? styles.tabActive : ''}`}
+            onClick={() => switchTab('Sign Up')}
           >
             Sign Up
           </div>
         </div>
 
+        {/* Google Sign In */}
         <div className={styles.socialGoogle} onClick={signUpWithGoogle}>
-          <img src="/google.jpg" alt="google" />
-          <span>{state === 'Log In' ? 'Sign In with Google' : 'Sign Up with Google'}</span>
+          <img src="/google-icon.svg" alt="Google" />
+          <span>{state === 'Log In' ? 'Tiếp tục với Google' : 'Đăng ký với Google'}</span>
         </div>
 
-        <span>OR</span>
+        <div className={styles.divider}>OR</div>
 
-        <form>
+        {/* Form */}
+        <form onSubmit={(e) => e.preventDefault()}>
           {state === 'Sign Up' && (
             <div className={styles.input}>
-              <TiUser size={16} />
+              <TiUser size={18} />
               <input
                 type="text"
                 name="name"
-                placeholder="Enter full name"
+                placeholder="Full name"
                 value={name}
                 onChange={handleChange}
               />
             </div>
           )}
           <div className={styles.input}>
-            <TfiEmail size={14} />
+            <TfiEmail size={16} />
             <input
-              type="text"
+              type="email"
               name="email"
-              placeholder="Enter email"
+              placeholder="Email address"
               value={email}
               onChange={handleChange}
             />
           </div>
           <div className={styles.input}>
-            <CiLock size={16} />
+            <CiLock size={18} />
             <input
               type="password"
               name="password"
-              placeholder="Enter password"
+              placeholder="Password"
               value={password}
               onChange={handleChange}
             />
@@ -192,7 +202,7 @@ export default function AuthPage() {
               <input
                 type="number"
                 name="OTP"
-                placeholder="OTP"
+                placeholder="Enter OTP code"
                 value={otpv}
                 onChange={(e) => setOtpv(e.target.value)}
               />
@@ -200,25 +210,38 @@ export default function AuthPage() {
           )}
         </form>
 
+        {/* Messages */}
         {error && <span className={styles.error}>{error}</span>}
         {success && <span className={styles.success}>{success}</span>}
 
+        {/* Terms / Forgot Password */}
         {state === 'Sign Up' ? (
           <div className={styles.dialogue}>
-            By signing up, you agree to our <b>terms of service</b> and <b>privacy policy</b>.
+            By signing up, you agree to our <b>Terms of Service</b> and <b>Privacy Policy</b>.
           </div>
         ) : (
           <div className={styles.forget}>
-            <Link href="/reset-password">Don&apos;t remember your password?</Link>
+            <Link href="/reset-password">Forgot your password?</Link>
           </div>
         )}
 
+        {/* Submit Button */}
         <div
           className={styles.footer}
           onClick={showOtp && state === 'Sign Up' ? verifyOTP : handleSubmit}
         >
-          {showOtp && state === 'Sign Up' ? 'Verify OTP' : state === 'Sign Up' ? 'SIGN UP FOR FREE' : 'LOG IN'}
+          {showOtp && state === 'Sign Up' 
+            ? 'Verify OTP' 
+            : state === 'Sign Up' 
+              ? 'Create Account' 
+              : 'Log In'}
         </div>
+
+        {/* Back to Home */}
+        <Link href="/" className={styles.backLink}>
+          <IoArrowBack size={14} />
+          Back to Home
+        </Link>
       </div>
     </div>
   );

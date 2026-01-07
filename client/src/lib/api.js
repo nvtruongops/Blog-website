@@ -236,19 +236,19 @@ export const checkfollowing = async (userid, followid) => {
 
 export const getfollowercount = async (userid) => {
   try {
-    const data = await axios.post(`${API_URL}/followercount`, { userid });
-    return data;
+    const { data } = await axios.post(`${API_URL}/countfollower`, { id: userid });
+    return { data };
   } catch (error) {
-    return { msg: 'error' };
+    return { data: { msg: 0 } };
   }
 };
 
 export const getfollowingcount = async (userid) => {
   try {
-    const data = await axios.post(`${API_URL}/followingcount`, { userid });
-    return data;
+    const { data } = await axios.post(`${API_URL}/countfollowing`, { id: userid });
+    return { data };
   } catch (error) {
-    return { msg: 'error' };
+    return { data: { msg: 0 } };
   }
 };
 
@@ -374,5 +374,40 @@ export const getallBookmarks = async (userid) => {
     return data;
   } catch (error) {
     return { msg: 'error' };
+  }
+};
+
+export const setPassword = async (userid, password, token) => {
+  try {
+    const { data } = await axios.post(
+      `${API_URL}/setpassword`,
+      { userid, password },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return data;
+  } catch (error) {
+    return { msg: 'error', error: error.response?.data?.message };
+  }
+};
+
+export const changeUserPassword = async (userid, oldPassword, newPassword, token) => {
+  try {
+    const { data } = await axios.post(
+      `${API_URL}/changeuserpassword`,
+      { userid, oldPassword, newPassword },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return data;
+  } catch (error) {
+    return { success: false, error: error.response?.data?.message || 'Có lỗi xảy ra' };
+  }
+};
+
+export const checkHasPassword = async (userid) => {
+  try {
+    const { data } = await axios.post(`${API_URL}/checkhaspassword`, { userid });
+    return data;
+  } catch (error) {
+    return { hasPassword: true };
   }
 };

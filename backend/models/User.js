@@ -13,6 +13,13 @@ const userSchema = new Schema(
       type: String,
       required: function () { return !this.googleId },
     },
+    tempPassword: {
+      type: String, // Temporary password for Google users to show once
+    },
+    hasSetPassword: {
+      type: Boolean,
+      default: false, // Track if Google user has set their own password
+    },
     verify: {
       type: Boolean,
       default: false
@@ -24,8 +31,7 @@ const userSchema = new Schema(
     picture: {
       type: String,
       trim: true,
-      default:
-        "https://res.cloudinary.com/dmhcnhtng/image/upload/v1643044376/avatars/default_pic_jeaybr.png",
+      default: "",  // Empty string - frontend sẽ hiển thị default avatar
     },
     about: {
       type: String

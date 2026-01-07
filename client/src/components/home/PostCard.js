@@ -33,7 +33,7 @@ export default function PostCard({ post, type }) {
         <div className={styles.meta}>
           <div className={styles.author}>
             <img
-              src={post.user?.picture || '/default-avatar.png'}
+              src={post.user?.picture || '/default-avatar.svg'}
               alt={post.user?.name}
               className={styles.avatar}
               referrerPolicy="no-referrer"

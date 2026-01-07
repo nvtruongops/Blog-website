@@ -142,3 +142,202 @@
   height: 40px;
   border-radius: 50%;
 }
+
+/* User Info Section */
+.userInfo {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.infoRow:last-child {
+  border-bottom: none;
+}
+
+.infoLabel {
+  font-weight: 600;
+  color: #495057;
+}
+
+.infoValue {
+  color: #212529;
+  font-family: monospace;
+}
+
+/* Password Section */
+.passwordSection {
+  max-width: 600px;
+  margin: 0 auto 2rem;
+  padding: 1.5rem;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.passwordSection h3 {
+  margin: 0 0 0.5rem 0;
+  color: #856404;
+}
+
+.passwordNote {
+  color: #856404;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.passwordSection form {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.inputGroup {
+  margin-bottom: 1rem;
+}
+
+.inputGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #495057;
+}
+
+.inputGroup input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.inputGroup input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.passwordSection button {
+  width: 100%;
+  padding: 0.75rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.passwordSection button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.success {
+  color: #28a745;
+  font-size: 0.875rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* Change Password Section */
+.changePasswordSection {
+  max-width: 600px;
+  margin: 0 auto 2rem;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.changePasswordToggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  transition: background 0.2s;
+}
+
+.changePasswordToggle:hover {
+  background: #e9ecef;
+}
+
+.changePasswordToggle span:first-child {
+  font-weight: 600;
+  color: #495057;
+}
+
+.toggleIcon {
+  color: #6c757d;
+  font-size: 0.75rem;
+}
+
+.changePasswordForm {
+  padding: 1.5rem;
+}
+
+.changePasswordForm .inputGroup {
+  margin-bottom: 1rem;
+}
+
+.changePasswordForm .inputGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #495057;
+  font-size: 0.9rem;
+}
+
+.changePasswordForm .inputGroup input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.changePasswordForm .inputGroup input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.changePasswordForm button {
+  width: 100%;
+  padding: 0.75rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background 0.2s;
+  margin-top: 0.5rem;
+}
+
+.changePasswordForm button:hover {
+  background: #0056b3;
+}
+
+.changePasswordForm button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.changePasswordForm .error,
+.changePasswordForm .success {
+  margin: 0.75rem 0;
+}

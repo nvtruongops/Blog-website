@@ -1,7 +1,18 @@
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const passport = require("passport");
+const bcrypt = require("bcrypt");
 const keys = require("../config/keys")
 const User = require('../models/User');
+
+// Generate random password
+const generateRandomPassword = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+  let password = '';
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+};
 
 passport.use(new GoogleStrategy({
   clientID: keys.GOOGLE_CLIENT_ID,
@@ -11,38 +22,62 @@ passport.use(new GoogleStrategy({
 },
   async (accessToken, refreshToken, profile, done) => {
     try {
-      User.findOne({ email: profile.emails[0].value }).then((user) => {
-        if (user && user.picture == "https://res.cloudinary.com/dmhcnhtng/image/upload/v1643044376/avatars/default_pic_jeaybr.png") {
-          user.picture = profile.photos[0].value;;
+      const email = profile.emails[0].value;
+      const photoUrl = profile.photos[0]?.value || "";
+      
+      // Check if user exists by email
+      let user = await User.findOne({ email: email });
+      
+      if (user) {
+        // Update existing user - chỉ cập nhật picture nếu user chưa có và Google có ảnh
+        if (!user.picture && photoUrl) {
+          user.picture = photoUrl;
         }
-        if (user && !user.googleId) {
+        if (!user.googleId) {
           user.googleId = profile.id;
-          user.password = "crnkefn";
-          return done(null, user);
         }
-        if (user && !user.likeslist) {
+        if (!user.likeslist) {
           user.likeslist = {};
         }
-        if (user && !user.bookmarkslist) {
+        if (!user.bookmarkslist) {
           user.bookmarkslist = {};
         }
-        if (user) user.save();
+        // Ensure Google users are verified
+        user.verify = true;
+        await user.save();
+        return done(null, user);
       }
-      )
-      User.findOne({ googleId: profile.id }).then((existingUser) => {
-        if (existingUser) {
-          return done(null, existingUser)
-        } else {
-          var url = profile.photos[0].value;
-          new User({ googleId: profile.id, email: profile.emails[0].value, picture: url, name: profile.displayName, likeslist: {}, bookmarkslist: {} }).save().then((user) => {
-            return done(null, user)
-            // done(null, user)
-          });
-        }
-      })
+      
+      // Check if user exists by googleId
+      user = await User.findOne({ googleId: profile.id });
+      
+      if (user) {
+        return done(null, user);
+      }
+      
+      // Create new user with auto-generated password
+      const tempPassword = generateRandomPassword();
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+      
+      const newUser = new User({
+        googleId: profile.id,
+        email: email,
+        picture: photoUrl,
+        name: profile.displayName,
+        password: hashedPassword,
+        tempPassword: tempPassword, // Store temp password to show user once
+        hasSetPassword: false,
+        verify: true,
+        likeslist: {},
+        bookmarkslist: {}
+      });
+      
+      await newUser.save();
+      return done(null, newUser);
     }
     catch (error) {
-      // console.log(error)
+      console.error('Google auth error:', error);
+      return done(error, null);
     }
   }
 ));

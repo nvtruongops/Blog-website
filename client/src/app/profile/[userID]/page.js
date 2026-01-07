@@ -76,7 +76,7 @@ export default function ProfileOfOtherUser() {
       <div className={styles.userWrapper}>
         <div className={styles.userImage}>
           <img
-            src={otherUser?.picture || 'https://res.cloudinary.com/dttyhvsnv/image/upload/v1677430557/default_pic_gxoa10.png'}
+            src={otherUser?.picture || '/default-avatar.svg'}
             alt={otherUser?.name}
             onClick={() => window.open(otherUser?.picture, '_blank')}
           />

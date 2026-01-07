@@ -14,6 +14,9 @@ const {
   sendResetPasswordCode,
   validateResetCode,
   changePassword,
+  setPassword,
+  checkHasPassword,
+  changeUserPassword,
   bookmark,
   deletebookmark,
   checkbookmark,
@@ -70,6 +73,9 @@ router.post("/getallBookmarks", getallBookmarks);
 router.post("/sendResetPasswordCode", sendResetPasswordCode);
 router.post("/validateResetCode", validateResetCode);
 router.post("/changePassword", changePassword);
+router.post("/setpassword", setPassword);
+router.post("/checkhaspassword", checkHasPassword);
+router.post("/changeuserpassword", authUser, changeUserPassword);
 router.post("/setbookmark", bookmark);
 router.post("/setlikes", likes);
 router.post("/getallLikes", getallLikes);
@@ -156,8 +162,8 @@ const register_google = async (req) => {
 router.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
 router.get("/auth/google/callback", passport.authenticate("google", {
-  successRedirect: `${keys.FRONTEND_URL}/`,
-  failureRedirect: `${keys.FRONTEND_URL}/login`
+  successRedirect: `${keys.FRONTEND_URL}/auth/callback`,
+  failureRedirect: `${keys.FRONTEND_URL}/auth?error=google_auth_failed`
 }))
 
 
@@ -171,21 +177,32 @@ router.get("/login/failed", (req, res) => {
 router.post("/login/success", async (req, res) => {
   if (req.isAuthenticated()) {
     const token = generateToken({ id: req.user._id.toString() }, "15d");
-    return res.status(201).send({
-      id: req.user._id,
-      name: req.user.name,
-      picture: req.user.picture,
+    
+    // Get fresh user data from DB
+    const User = require("../models/User");
+    const freshUser = await User.findById(req.user._id);
+    
+    const response = {
+      id: freshUser._id,
+      name: freshUser.name,
+      picture: freshUser.picture,
       token: token,
-      likes: req.user.likes,
-      bookmarks: req.user.bookmarks,
-    });
-    // res.status(200).json({
-    //   success: true,
-    //   message: "successfull",
-    //   user: { id: req.user._id, name: req.user.name, email: req.user.email, googleId: req.user.googleId, picture: req.user.picture }
-    // });
+      likes: freshUser.likes || [],
+      bookmarks: freshUser.bookmarks || [],
+      email: freshUser.email,
+    };
+    
+    // Include temp password only once for new Google users who haven't set password
+    if (freshUser.tempPassword && !freshUser.hasSetPassword) {
+      response.tempPassword = freshUser.tempPassword;
+      response.isFirstGoogleLogin = true;
+      // Clear temp password after sending
+      freshUser.tempPassword = undefined;
+      await freshUser.save();
+    }
+    
+    return res.status(201).send(response);
   } else {
-    // console.log("failed");
     return res.status(401).json({
       success: false,
       message: "Un-successfull",

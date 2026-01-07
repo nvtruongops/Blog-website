@@ -56,14 +56,19 @@ const checkifverify = async (req, res) => {
         const { mail } = req.body
         const data = await User.findOne({ email: mail });
         if (!data) {
-            return res.status(200).json({ msg: "ne" });
+            return res.status(200).json({ msg: "ne" }); // User not exists
         }
+        
+        // Google users are always verified
+        if (data.googleId) {
+            return res.status(200).json({ msg: "ok", isGoogleUser: true });
+        }
+        
         if (data.verify === true) {
             return res.status(200).json({ msg: "ok" });
         }
         else {
             return res.status(200).json({ msg: "not" });
-
         }
     } catch (error) {
         return res.status(400).json({ msg: "error" });

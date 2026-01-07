@@ -763,25 +763,29 @@ exports.deletepost = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { temail, password } = req.body;
+    // Find user by email
     const user = await User.findOne({ email: temail });
+    
     if (!user) {
       return res.status(400).json({
-        message:
-          "the email you entered is not registered.",
+        message: "Email chưa được đăng ký.",
       });
     }
-    if (user.googleId) {
+    
+    // Check if Google user has set their own password
+    if (user.googleId && !user.hasSetPassword) {
       return res.status(400).json({
-        message:
-          "You have account associated with google, trying signing up again using google",
+        message: "Tài khoản này đăng nhập bằng Google. Vui lòng đăng nhập bằng Google hoặc vào Profile để đặt mật khẩu.",
       });
     }
+    
     const check = await bcrypt.compare(password, user.password);
     if (!check) {
       return res.status(400).json({
-        message: "Invalid Credentials. Please Try Again.",
+        message: "Mật khẩu không đúng. Vui lòng thử lại.",
       });
     }
+    
     const token = generateToken({ id: user._id.toString() }, "15d");
     res.send({
       id: user._id,
@@ -790,6 +794,7 @@ exports.login = async (req, res) => {
       token: token,
       bookmark: user.bookmarks,
       likes: user.likes,
+      email: user.email,
     });
   } catch (error) {
     // console.log(error);
@@ -884,6 +889,65 @@ exports.changePassword = async (req, res) => {
 
   } catch (error) {
     res.status(400).json({ message: "AN ERROR OCCURRED, PLEASE TRY AGAIN LATER" })
+  }
+};
+
+exports.setPassword = async (req, res) => {
+  const { userid, password } = req.body;
+  try {
+    if (!password || password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+    const cryptedPassword = await bcrypt.hash(password, 12);
+    await User.findByIdAndUpdate(userid, {
+      password: cryptedPassword,
+      hasSetPassword: true,
+      tempPassword: undefined
+    });
+    return res.status(200).json({ message: "ok", success: true });
+  } catch (error) {
+    res.status(400).json({ message: "AN ERROR OCCURRED, PLEASE TRY AGAIN LATER" });
+  }
+};
+
+exports.checkHasPassword = async (req, res) => {
+  const { userid } = req.body;
+  try {
+    const user = await User.findById(userid).select('hasSetPassword googleId');
+    // User has password if: hasSetPassword is true OR they don't have googleId (registered normally)
+    const hasPassword = user.hasSetPassword || !user.googleId;
+    return res.status(200).json({ hasPassword, isGoogleUser: !!user.googleId });
+  } catch (error) {
+    res.status(400).json({ hasPassword: true });
+  }
+};
+
+exports.changeUserPassword = async (req, res) => {
+  const { userid, oldPassword, newPassword } = req.body;
+  try {
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: "Mật khẩu mới phải có ít nhất 6 ký tự" });
+    }
+    
+    const user = await User.findById(userid);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User không tồn tại" });
+    }
+    
+    // Verify old password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: "Mật khẩu hiện tại không đúng" });
+    }
+    
+    // Hash and save new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    user.password = hashedPassword;
+    await user.save();
+    
+    return res.status(200).json({ success: true, message: "Đổi mật khẩu thành công" });
+  } catch (error) {
+    res.status(400).json({ success: false, message: "Có lỗi xảy ra, vui lòng thử lại" });
   }
 };
 
