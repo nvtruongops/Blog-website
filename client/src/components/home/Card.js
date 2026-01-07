@@ -1,15 +1,38 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { BsSearch } from 'react-icons/bs';
 import styles from './Card.module.css';
 
 const categories = ['all', 'food', 'travelling', 'lifestyle', 'tech'];
 
-export default function Card() {
-  const [active, setActive] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+export default function Card({ 
+  category, 
+  setCategory, 
+  filterBy, 
+  setFilterBy, 
+  sortBy, 
+  setSortBy,
+  searchQuery,
+  setSearchQuery 
+}) {
+  const router = useRouter();
+  const [localSearch, setLocalSearch] = useState(searchQuery || '');
+
+  const handleSearch = () => {
+    setSearchQuery(localSearch);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleCategoryClick = (cat) => {
+    setCategory(cat);
+  };
 
   return (
     <div className={styles.card}>
@@ -28,7 +51,7 @@ export default function Card() {
         </p>
       </div>
 
-      {/* Main Card Frame - Kiểu báo/sách */}
+      {/* Main Card Frame */}
       <div className={styles.mainCard}>
         {/* Search Box */}
         <div className={styles.searchBox}>
@@ -36,10 +59,11 @@ export default function Card() {
             type="text"
             className={styles.searchInput}
             placeholder="Search blogs, topics, authors..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
+            onKeyPress={handleKeyPress}
           />
-          <button className={styles.searchBtn}>
+          <button className={styles.searchBtn} onClick={handleSearch}>
             <BsSearch style={{ marginRight: '6px' }} />
             Search
           </button>
@@ -49,7 +73,11 @@ export default function Card() {
         <div className={styles.options}>
           <div className={styles.optionGroup}>
             <span className={styles.optionLabel}>Filter by:</span>
-            <select className={styles.select}>
+            <select 
+              className={styles.select}
+              value={filterBy}
+              onChange={(e) => setFilterBy(e.target.value)}
+            >
               <option value="latest">Latest</option>
               <option value="popular">Popular</option>
               <option value="trending">Trending</option>
@@ -58,7 +86,11 @@ export default function Card() {
 
           <div className={styles.optionGroup}>
             <span className={styles.optionLabel}>Sort:</span>
-            <select className={styles.select}>
+            <select 
+              className={styles.select}
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
               <option value="date">Date</option>
               <option value="views">Views</option>
               <option value="likes">Likes</option>
@@ -71,14 +103,13 @@ export default function Card() {
           <p className={styles.subtitle}>Browse by topics:</p>
           <div className={styles.categories}>
             {categories.map((cat) => (
-              <Link
+              <button
                 key={cat}
-                href={cat === 'all' ? '/' : `/topic/${cat}`}
-                className={`${styles.category} ${active === cat ? styles.active : ''}`}
-                onClick={() => setActive(cat)}
+                className={`${styles.category} ${category === cat ? styles.active : ''}`}
+                onClick={() => handleCategoryClick(cat)}
               >
                 {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </Link>
+              </button>
             ))}
           </div>
         </div>

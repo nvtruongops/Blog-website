@@ -223,6 +223,10 @@ export default function UserProfile() {
     setShowPosts(true);
   };
 
+  const handleDeletePost = (postId) => {
+    setPosts((prev) => prev.filter((p) => p._id !== postId));
+  };
+
   const handleLoadFollowing = async () => {
     const data = await fetchfollowing(user.id);
     setFollowing(data.msg || []);
@@ -372,7 +376,14 @@ export default function UserProfile() {
       <div className={styles.sections}>
         <Section title="Liked Posts" onClick={handleLoadLiked} show={showLiked} items={likedPosts} />
         <Section title="Bookmarks" onClick={handleLoadBookmarks} show={showBookmarks} items={bookmarks} />
-        <Section title="Your Posts" onClick={handleLoadPosts} show={showPosts} items={posts} type="powner" />
+        <Section 
+          title="Your Posts" 
+          onClick={handleLoadPosts} 
+          show={showPosts} 
+          items={posts} 
+          type="powner" 
+          onDelete={handleDeletePost}
+        />
 
         <div className={styles.section}>
           <h2 onClick={handleLoadFollowing}>People You Follow:</h2>
@@ -398,7 +409,7 @@ export default function UserProfile() {
   );
 }
 
-function Section({ title, onClick, show, items, type }) {
+function Section({ title, onClick, show, items, type, onDelete }) {
   return (
     <div className={styles.section}>
       <h2 onClick={onClick}>{title}:</h2>
@@ -408,7 +419,12 @@ function Section({ title, onClick, show, items, type }) {
         ) : (
           <div className={styles.postsGrid}>
             {items.map((post, i) => (
-              <PostCard post={post} key={i} type={type} />
+              <PostCard 
+                post={post} 
+                key={post._id || i} 
+                type={type} 
+                onDelete={onDelete}
+              />
             ))}
           </div>
         )

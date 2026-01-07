@@ -21,6 +21,14 @@
   font-size: 0.875rem;
 }
 
+.noResults {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
 @media (max-width: 768px) {
   .container {
     grid-template-columns: 1fr;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Cookies from 'js-cookie';
 import Navbar from '@/components/Navbar';
@@ -13,9 +13,14 @@ import { login } from '@/store/slices/userSlice';
 export default function HomePage() {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user);
+  
+  // Filter states
+  const [category, setCategory] = useState('all');
+  const [filterBy, setFilterBy] = useState('latest');
+  const [sortBy, setSortBy] = useState('date');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    // Kiểm tra user từ cookie khi load trang
     const userCookie = Cookies.get('user');
     if (!user && userCookie) {
       try {
@@ -30,9 +35,23 @@ export default function HomePage() {
   return (
     <div className="HomePage">
       <Navbar user={user} />
-      <Card />
+      <Card 
+        category={category}
+        setCategory={setCategory}
+        filterBy={filterBy}
+        setFilterBy={setFilterBy}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+      />
       <Breaker text="Featured Post" />
-      <Posts category="all" />
+      <Posts 
+        category={category} 
+        filterBy={filterBy}
+        sortBy={sortBy}
+        searchQuery={searchQuery}
+      />
       <Footer />
     </div>
   );

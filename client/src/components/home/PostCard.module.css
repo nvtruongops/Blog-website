@@ -122,7 +122,6 @@
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  margin-top: 0.75rem;
   padding: 0.375rem 0.875rem;
   background: var(--brown-primary);
   color: white;
@@ -135,4 +134,77 @@
 .editBtn:hover {
   background: var(--brown-dark);
   color: white;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.deleteBtn:hover {
+  background: #c82333;
+}
+
+.confirmDelete {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.confirmDelete span {
+  color: var(--text-secondary);
+}
+
+.confirmYes {
+  padding: 0.25rem 0.625rem;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.confirmYes:hover {
+  background: #c82333;
+}
+
+.confirmYes:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.confirmNo {
+  padding: 0.25rem 0.625rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.confirmNo:hover {
+  background: var(--bg-tertiary);
 }

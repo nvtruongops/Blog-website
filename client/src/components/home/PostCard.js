@@ -1,20 +1,51 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
+import { BeatLoader } from 'react-spinners';
+import { deletepost } from '@/lib/api';
 import styles from './PostCard.module.css';
 
-export default function PostCard({ post, type }) {
+export default function PostCard({ post, type, onDelete }) {
   const router = useRouter();
   const user = useSelector((state) => state.user);
+  const [deleting, setDeleting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const date = new Date(post.createdAt);
   const options = { month: 'long', day: 'numeric', year: 'numeric' };
   const formattedDate = date.toLocaleDateString('en-US', options);
 
+  // Check if current user owns this post
+  const isOwner = user && (post.user?._id === user.id || post.user === user.id);
+
   const handleClick = () => {
-    router.push(`/article/${post._id}`);
+    if (!showConfirm) {
+      router.push(`/article/${post._id}`);
+    }
+  };
+
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    setDeleting(true);
+    try {
+      const result = await deletepost(post._id, user.id, user.token);
+      if (result.msg === 'ok') {
+        if (onDelete) {
+          onDelete(post._id);
+        } else {
+          window.location.reload();
+        }
+      } else {
+        alert('Không thể xóa bài viết');
+      }
+    } catch (error) {
+      alert('Có lỗi xảy ra');
+    }
+    setDeleting(false);
+    setShowConfirm(false);
   };
 
   return (
@@ -46,14 +77,45 @@ export default function PostCard({ post, type }) {
           <span>{post.views || 0} views</span>
           <span>{post.likes || 0} likes</span>
         </div>
-        {type === 'powner' && (
-          <Link
-            href={`/edit/${post._id}`}
-            className={styles.editBtn}
-            onClick={(e) => e.stopPropagation()}
-          >
-            Edit
-          </Link>
+        
+        {/* Action buttons for post owner */}
+        {(type === 'powner' || isOwner) && (
+          <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
+            <Link href={`/edit/${post._id}`} className={styles.editBtn}>
+              Edit
+            </Link>
+            {!showConfirm ? (
+              <button
+                className={styles.deleteBtn}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowConfirm(true);
+                }}
+              >
+                Delete
+              </button>
+            ) : (
+              <div className={styles.confirmDelete}>
+                <span>Xác nhận xóa?</span>
+                <button
+                  className={styles.confirmYes}
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? <BeatLoader size={8} color="#fff" /> : 'Xóa'}
+                </button>
+                <button
+                  className={styles.confirmNo}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowConfirm(false);
+                  }}
+                >
+                  Hủy
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

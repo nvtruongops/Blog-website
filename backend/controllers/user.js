@@ -39,26 +39,26 @@ exports.sendreportmails = async (req, res) => {
 exports.register = async (req, res) => {
   try {
     const { name, temail, password } = req.body;
-    if (!validateLength(name, 6, 15)) {
+    if (!validateLength(name, 1, 50)) {
       return res
         .status(400)
-        .json({ message: "Enter name between 6 to 15 characters !" });
+        .json({ message: "Tên phải từ 1 đến 50 ký tự!" });
     }
     if (!validateEmail(temail)) {
       return res.status(400).json({ message: "Please enter a valid email !" });
     }
 
-    if (!validateLength(password, 6, 15)) {
+    if (!validateLength(password, 6, 50)) {
       return res
         .status(400)
-        .json({ message: "Enter password between 6 to 15 characters !" });
+        .json({ message: "Mật khẩu phải từ 6 đến 50 ký tự!" });
     }
 
-    const check = await User.findOne({ temail });
+    const check = await User.findOne({ email: temail });
     if (check) {
       return res.status(400).json({
         message:
-          "This email already exists,try again with a different email",
+          "Email này đã được đăng ký, vui lòng dùng email khác",
       });
     }
 
@@ -743,9 +743,20 @@ exports.checkfollowing = async (req, res) => {
 exports.deletepost = async (req, res) => {
   try {
     const { postid, userid } = req.body;
+    
+    // Verify the post belongs to the user
+    const post = await Post.findById(postid);
+    if (!post) {
+      return res.status(404).json({ msg: "Post not found" });
+    }
+    
+    if (post.user.toString() !== userid) {
+      return res.status(403).json({ msg: "You can only delete your own posts" });
+    }
+    
     await Post.deleteOne({ _id: postid });
-    var datas = await User.findById(userid)
-    arr = datas.posts;
+    var datas = await User.findById(userid);
+    var arr = datas.posts;
     for (var i = 0; i < arr.length; i++) {
       if (arr[i] == postid) {
         arr.splice(i, 1);
@@ -753,11 +764,10 @@ exports.deletepost = async (req, res) => {
       }
     }
     datas.posts = arr;
-    datas.save();
-    return res.status(200).json({ mgs: "ok" });
+    await datas.save();
+    return res.status(200).json({ msg: "ok" });
   } catch (error) {
-    // console.log("error in deleting post");
-    return res.status(400).json({ mgs: "Error" });
+    return res.status(400).json({ msg: "Error deleting post" });
   }
 }
 exports.login = async (req, res) => {

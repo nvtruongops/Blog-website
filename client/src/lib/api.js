@@ -88,10 +88,15 @@ export const getarticle = async (id) => {
 
 export const getAllPost = async (page, category) => {
   try {
-    const { data } = await axios.post(`${API_URL}/getallpost`, { page, category });
-    return data;
+    const size = 10;
+    const { data } = await axios.post(
+      `${API_URL}/getallpost?page=${page}&size=${size}`, 
+      { mpost: category }
+    );
+    // Backend returns { posts, total, page, size }
+    return { msg: data.posts || [], total: data.total };
   } catch (error) {
-    return { msg: 'error' };
+    return { msg: [] };
   }
 };
 
@@ -179,7 +184,7 @@ export const decreastLike = async (id) => {
 export const createcomment = async (name, image, comment, commentBy, postId) => {
   try {
     const { data } = await axios.post(`${API_URL}/postcomment`, {
-      name, image, comment, commentBy, postId
+      name, image, content: comment, commentBy, postId
     });
     return data;
   } catch (error) {
@@ -189,7 +194,7 @@ export const createcomment = async (name, image, comment, commentBy, postId) => 
 
 export const getcomment = async (postId) => {
   try {
-    const { data } = await axios.post(`${API_URL}/getcomment`, { postId });
+    const { data } = await axios.post(`${API_URL}/getcomment`, { id: postId });
     return data;
   } catch (error) {
     return { msg: 'error' };
@@ -209,7 +214,7 @@ export const reportcontent = async (pid, postid, userid, name1, name2, reason) =
 
 export const startfollow = async (userid, followid) => {
   try {
-    const { data } = await axios.post(`${API_URL}/follow`, { userid, followid });
+    const { data } = await axios.post(`${API_URL}/startfollow`, { id: userid, id2: followid });
     return data;
   } catch (error) {
     return { msg: 'error' };
@@ -218,7 +223,7 @@ export const startfollow = async (userid, followid) => {
 
 export const unfollow = async (userid, followid) => {
   try {
-    const { data } = await axios.post(`${API_URL}/unfollow`, { userid, followid });
+    const { data } = await axios.post(`${API_URL}/unfollow`, { id: userid, id2: followid });
     return data;
   } catch (error) {
     return { msg: 'error' };
@@ -227,7 +232,7 @@ export const unfollow = async (userid, followid) => {
 
 export const checkfollowing = async (userid, followid) => {
   try {
-    const { data } = await axios.post(`${API_URL}/checkfollowing`, { userid, followid });
+    const { data } = await axios.post(`${API_URL}/checkfollow`, { id: userid, id2: followid });
     return data;
   } catch (error) {
     return { msg: 'error' };
@@ -263,7 +268,7 @@ export const fetchprof = async (userid) => {
 
 export const showbookmarks = async (userid) => {
   try {
-    const data = await axios.post(`${API_URL}/showbookmark`, { userid });
+    const data = await axios.post(`${API_URL}/showbookmarks`, { id: userid });
     return data;
   } catch (error) {
     return { msg: 'error' };
@@ -272,7 +277,7 @@ export const showbookmarks = async (userid) => {
 
 export const showLikemarks = async (userid) => {
   try {
-    const data = await axios.post(`${API_URL}/showLikemark`, { userid });
+    const data = await axios.post(`${API_URL}/showLikemarks`, { id: userid });
     return data;
   } catch (error) {
     return { msg: 'error' };
@@ -281,7 +286,7 @@ export const showLikemarks = async (userid) => {
 
 export const showmyposts = async (userid) => {
   try {
-    const { data } = await axios.post(`${API_URL}/showmyposts`, { userid });
+    const { data } = await axios.post(`${API_URL}/showmyposts`, { id: userid });
     return data;
   } catch (error) {
     return { msg: 'error' };
@@ -290,7 +295,7 @@ export const showmyposts = async (userid) => {
 
 export const fetchfollowing = async (userid) => {
   try {
-    const { data } = await axios.post(`${API_URL}/fetchfollowing`, { userid });
+    const { data } = await axios.post(`${API_URL}/fetchfollowing`, { id: userid });
     return data;
   } catch (error) {
     return { msg: 'error' };
@@ -299,7 +304,7 @@ export const fetchfollowing = async (userid) => {
 
 export const changeabout = async (about, userid) => {
   try {
-    const { data } = await axios.post(`${API_URL}/changeabout`, { about, userid });
+    const { data } = await axios.post(`${API_URL}/changeabout`, { about, id: userid });
     return data;
   } catch (error) {
     return { msg: 'error' };

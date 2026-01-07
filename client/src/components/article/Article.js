@@ -127,11 +127,9 @@ export default function Article({ post, __id }) {
   };
 
   const loadComments = async () => {
-    const data = await getcomment(postUser._id);
-    if (data[data.length - 1]?.msg === 'ok') {
-      data.pop();
-      data.reverse();
-      setComments(data);
+    const data = await getcomment(__id);
+    if (Array.isArray(data)) {
+      setComments(data.reverse());
     }
   };
 
@@ -140,7 +138,7 @@ export default function Article({ post, __id }) {
       alert('Comment must be between 1 and 550 characters');
       return;
     }
-    const data = await createcomment(user.name, user.picture, comment, user.id, postUser._id);
+    const data = await createcomment(user.name, user.picture, comment, user.id, __id);
     if (data.msg === 'ok') {
       setComment('');
       loadComments();

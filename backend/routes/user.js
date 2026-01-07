@@ -90,7 +90,7 @@ router.post("/showbookmarks", showbookmark);
 router.post("/showLikemarks", showLikemark);
 router.post("/fetchprof", fetchprof);
 router.post("/showmyposts", showmyposts);
-router.post("/deletepost", deletepost);
+router.post("/deletepost", authUser, deletepost);
 router.post("/fetchfollowing", fetchfollowing);
 router.post("/startfollow", follow);
 router.post("/unfollow", unfollow);
@@ -191,15 +191,6 @@ router.post("/login/success", async (req, res) => {
       bookmarks: freshUser.bookmarks || [],
       email: freshUser.email,
     };
-    
-    // Include temp password only once for new Google users who haven't set password
-    if (freshUser.tempPassword && !freshUser.hasSetPassword) {
-      response.tempPassword = freshUser.tempPassword;
-      response.isFirstGoogleLogin = true;
-      // Clear temp password after sending
-      freshUser.tempPassword = undefined;
-      await freshUser.save();
-    }
     
     return res.status(201).send(response);
   } else {

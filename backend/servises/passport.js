@@ -33,9 +33,21 @@ passport.use(new GoogleStrategy({
         if (!user.picture && photoUrl) {
           user.picture = photoUrl;
         }
-        if (!user.googleId) {
+        
+        // First time linking Google to existing account
+        const isFirstGoogleLink = !user.googleId;
+        if (isFirstGoogleLink) {
           user.googleId = profile.id;
+          // If user doesn't have password set (shouldn't happen but just in case)
+          if (!user.hasSetPassword && !user.password) {
+            const tempPassword = generateRandomPassword();
+            const hashedPassword = await bcrypt.hash(tempPassword, 10);
+            user.password = hashedPassword;
+            user.tempPassword = tempPassword;
+            user.hasSetPassword = false;
+          }
         }
+        
         if (!user.likeslist) {
           user.likeslist = {};
         }
@@ -65,7 +77,6 @@ passport.use(new GoogleStrategy({
         picture: photoUrl,
         name: profile.displayName,
         password: hashedPassword,
-        tempPassword: tempPassword, // Store temp password to show user once
         hasSetPassword: false,
         verify: true,
         likeslist: {},

@@ -147,6 +147,66 @@
   border-radius: 5px;
 }
 
+/* Fix list styles for article content */
+.content ul,
+.content ol {
+  margin: 1em 0;
+  padding-left: 2em;
+}
+
+.content ul {
+  list-style-type: disc;
+}
+
+.content ol {
+  list-style-type: decimal;
+}
+
+.content ul ul {
+  list-style-type: circle;
+}
+
+.content ul ul ul {
+  list-style-type: square;
+}
+
+.content ol ol {
+  list-style-type: lower-alpha;
+}
+
+.content ol ol ol {
+  list-style-type: lower-roman;
+}
+
+.content li {
+  margin: 0.5em 0;
+}
+
+.content h1,
+.content h2,
+.content h3,
+.content h4 {
+  margin: 1.5em 0 0.5em;
+  color: #222;
+}
+
+.content h1 { font-size: 1.75rem; }
+.content h2 { font-size: 1.5rem; }
+.content h3 { font-size: 1.25rem; }
+.content h4 { font-size: 1.1rem; }
+
+.content p {
+  margin: 1em 0;
+}
+
+.content blockquote {
+  margin: 1em 0;
+  padding: 1em 1.5em;
+  border-left: 4px solid var(--green-primary, #2d8a4e);
+  background: #f9f9f9;
+  font-style: italic;
+}
+
 .comments {
   margin-top: 2rem;
 }

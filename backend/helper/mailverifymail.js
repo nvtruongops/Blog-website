@@ -2,6 +2,11 @@ const nodemailer = require("nodemailer");
 const keys = require("../config/keys");
 
 exports.sendVerifyCode = (email, name, code) => {
+  console.log("=== SENDING VERIFICATION EMAIL ===");
+  console.log("To:", email);
+  console.log("From:", keys.EMAIL_ID);
+  console.log("Code:", code);
+  
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -9,7 +14,7 @@ exports.sendVerifyCode = (email, name, code) => {
       pass: keys.PASS,
     },
   });
-  // console.log(email)
+
   const mailOptions = {
     from: keys.EMAIL_ID,
     to: email,
@@ -68,6 +73,12 @@ exports.sendVerifyCode = (email, name, code) => {
 
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
+      console.error("=== EMAIL ERROR ===");
+      console.error("Error:", error.message);
+      console.error("Full error:", error);
+    } else {
+      console.log("=== EMAIL SENT SUCCESSFULLY ===");
+      console.log("Response:", info.response);
     }
   });
 };

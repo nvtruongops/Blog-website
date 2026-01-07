@@ -131,6 +131,41 @@ input::placeholder, textarea::placeholder {
   color: var(--text-muted);
 }
 
+/* Jodit Editor - Fix list styles (ul/ol) */
+.jodit-wysiwyg ul,
+.jodit-wysiwyg ol {
+  margin: 0.5em 0;
+  padding-left: 2em;
+}
+
+.jodit-wysiwyg ul {
+  list-style-type: disc;
+}
+
+.jodit-wysiwyg ol {
+  list-style-type: decimal;
+}
+
+.jodit-wysiwyg ul ul {
+  list-style-type: circle;
+}
+
+.jodit-wysiwyg ul ul ul {
+  list-style-type: square;
+}
+
+.jodit-wysiwyg ol ol {
+  list-style-type: lower-alpha;
+}
+
+.jodit-wysiwyg ol ol ol {
+  list-style-type: lower-roman;
+}
+
+.jodit-wysiwyg li {
+  margin: 0.25em 0;
+}
+
 /* Utility Classes */
 .container {
   max-width: 1200px;

@@ -95,30 +95,25 @@ exports.decreastLike = async (req, res) => {
 }
 exports.postcomment = async (req, res) => {
   try {
-    const { name,
-      image,
-      content,
-      id1,
-      id2 } = req.body;
-    const user = await Post.findOne({ user: id2 });
-    // var n = user.comment.size();
-    const date = new Date();
-
-    var ndata = {
+    const { name, image, content, commentBy, postId } = req.body;
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ msg: "Post not found" });
+    }
+    
+    const newComment = {
       comment: content,
       image: image,
-      commentBy: id1,
-      commentAt: date,
+      commentBy: commentBy,
+      commentAt: new Date(),
       name: name
-    }
-    var datas = user.comments;
-    datas.push(ndata)
-    user.comments = datas;
-    user.save();
+    };
+    
+    post.comments.push(newComment);
+    await post.save();
     res.status(201).json({ msg: "ok" });
   } catch (error) {
-    // console.log(error)
-    res.status(401).json({ msg: "An Error Occurred" })
+    res.status(400).json({ msg: "An Error Occurred" });
   }
 }
 exports.getallpostdata = async (req, res) => {
@@ -151,12 +146,12 @@ exports.getarticle = async (req, res) => {
 exports.getcomment = async (req, res) => {
   try {
     const { id } = req.body;
-    const data = await Post.findOne({ user: id });
-    const user = data.comments
-    // console.log(user);
-    res.status(201).json(user);
+    const data = await Post.findById(id);
+    if (!data) {
+      return res.status(404).json({ msg: "Post not found" });
+    }
+    res.status(200).json(data.comments || []);
   } catch (error) {
-    // console.log(error)
     res.status(400).json({ msg: "error" })
   }
 }

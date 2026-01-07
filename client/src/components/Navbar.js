@@ -65,7 +65,7 @@ export default function Navbar({ postpage }) {
               <ul className={styles.searchList}>
                 {searchResults.map((i, idx) => (
                   <li key={idx} className={styles.listItem}>
-                    <img className={styles.searchImg} src={i.pic} alt="" />
+                    <img className={styles.searchImg} src={i.pic || '/default-avatar.svg'} alt="" />
                     <Link href={user ? `/profile/${i.id}` : '/auth'}>
                       <p>{i.name}</p>
                     </Link>
@@ -92,7 +92,7 @@ export default function Navbar({ postpage }) {
           </Link>
           <Link className={styles.userLink} href="/profile">
             <div className={styles.userImage}>
-              <img src={user.picture} alt="" referrerPolicy="no-referrer" />
+              <img src={user.picture || '/default-avatar.svg'} alt="" referrerPolicy="no-referrer" />
             </div>
           </Link>
           <Link href="" className={styles.logout} onClick={logoutFunction}>
