@@ -57,46 +57,78 @@ var GoogleStrategy = require('passport-google-oidc');
 const router = express.Router();
 const app = express();
 const { authUser } = require("../middleware/auth");
+
+// Import validation middleware - Requirements 1.1
+const {
+  registerValidation,
+  loginValidation,
+  handleValidationErrors
+} = require("../middleware/validator");
+
+// Import rate limiter for authentication - Requirement 2.1
+const { authLimiter } = require("../middleware/security");
+
+// Import CSRF token handler - Requirement 6.2
+const { getCSRFToken, setCSRFToken } = require("../middleware/csrf");
 // app.use(passport.initialize());
 // app.use(passport.session());
-router.post("/register", register);
+
+// CSRF token endpoint - Requirement 6.2: Frontend SHALL include CSRF tokens
+router.get("/csrf-token", setCSRFToken, getCSRFToken);
+
+// Register route with validation - Requirement 1.1
+router.post("/register", registerValidation, handleValidationErrors, register);
 router.post("/checkotpv", checkotpv);
 
 router.post("/checkifverify", checkifverify);
-router.post("/login", login);
+
+// Login route with validation and rate limiting - Requirements 1.1, 2.1
+router.post("/login", authLimiter, loginValidation, handleValidationErrors, login);
 router.post("/sendmail", sendmail);
 router.post("/verifycode", verifycode);
 router.put("/uploadprofile", authUser, uploadprofile);
 router.get("/getUser/:userId", getUser);
 router.post("/findOutUser", findOutUser);
-router.post("/getallBookmarks", getallBookmarks);
+
+// Protected routes requiring authentication - Requirement 3.2
+router.post("/getallBookmarks", authUser, getallBookmarks);
 router.post("/sendResetPasswordCode", sendResetPasswordCode);
 router.post("/validateResetCode", validateResetCode);
 router.post("/changePassword", changePassword);
-router.post("/setpassword", setPassword);
-router.post("/checkhaspassword", checkHasPassword);
+router.post("/setpassword", authUser, setPassword);
+router.post("/checkhaspassword", authUser, checkHasPassword);
 router.post("/changeuserpassword", authUser, changeUserPassword);
-router.post("/setbookmark", bookmark);
-router.post("/setlikes", likes);
-router.post("/getallLikes", getallLikes);
-router.post("/deletelikes", deletelikes);
-router.post("/checklikes", checklikes);
-router.post("/deletebookmark", deletebookmark);
-router.post("/checkbookmark", checkbookmark);
+
+// Bookmark routes - require authentication for state-changing operations
+router.post("/setbookmark", authUser, bookmark);
+router.post("/deletebookmark", authUser, deletebookmark);
+router.post("/checkbookmark", authUser, checkbookmark);
+
+// Likes routes - require authentication for state-changing operations
+router.post("/setlikes", authUser, likes);
+router.post("/getallLikes", authUser, getallLikes);
+router.post("/deletelikes", authUser, deletelikes);
+router.post("/checklikes", authUser, checklikes);
+
 router.post("/reportcontent", sendreportmails);
 router.post("/countfollower", followercount);
 router.post("/countfollowing", followingcount);
-router.post("/showbookmarks", showbookmark);
-router.post("/showLikemarks", showLikemark);
+router.post("/showbookmarks", authUser, showbookmark);
+router.post("/showLikemarks", authUser, showLikemark);
 router.post("/fetchprof", fetchprof);
 router.post("/showmyposts", showmyposts);
 router.post("/deletepost", authUser, deletepost);
 router.post("/fetchfollowing", fetchfollowing);
-router.post("/startfollow", follow);
-router.post("/unfollow", unfollow);
+
+// Follow routes - require authentication for state-changing operations
+router.post("/startfollow", authUser, follow);
+router.post("/unfollow", authUser, unfollow);
+router.post("/checkfollow", authUser, checkfollowing);
+
 router.post("/searchresult", searchresult);
-router.post("/checkfollow", checkfollowing);
-router.post("/changeabout", changeabout);
+
+// Profile update - require authentication
+router.post("/changeabout", authUser, changeabout);
 
 
 const register_google = async (req) => {
