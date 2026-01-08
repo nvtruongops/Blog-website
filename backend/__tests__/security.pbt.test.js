@@ -2119,15 +2119,20 @@ describe('Feature: security-enhancement, Property 8: Unauthorized Access Logging
     sanitizeLogEntry 
   } = require('../helper/securityLogger');
 
-  // Store original console.log to restore later
+  // Store original console methods to restore later
   let originalConsoleLog;
+  let originalConsoleWarn;
+  let originalConsoleError;
   let loggedEntries;
 
   beforeEach(() => {
     loggedEntries = [];
     originalConsoleLog = console.log;
-    // Mock console.log to capture logged entries
-    console.log = jest.fn((...args) => {
+    originalConsoleWarn = console.warn;
+    originalConsoleError = console.error;
+    
+    // Helper to capture logged entries from any console method
+    const captureLog = (...args) => {
       if (args[0] === '[SECURITY]') {
         try {
           loggedEntries.push(JSON.parse(args[1]));
@@ -2135,11 +2140,18 @@ describe('Feature: security-enhancement, Property 8: Unauthorized Access Logging
           loggedEntries.push(args[1]);
         }
       }
-    });
+    };
+    
+    // Mock all console methods to capture logged entries
+    console.log = jest.fn(captureLog);
+    console.warn = jest.fn(captureLog);
+    console.error = jest.fn(captureLog);
   });
 
   afterEach(() => {
     console.log = originalConsoleLog;
+    console.warn = originalConsoleWarn;
+    console.error = originalConsoleError;
   });
 
   /**

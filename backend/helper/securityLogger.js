@@ -1,5 +1,24 @@
-const fs = require('fs');
-const path = require('path');
+/**
+ * Security Logger Module
+ * Uses Axiom for cloud logging in all environments
+ * Console output is also captured by Vercel/serverless platforms
+ */
+
+const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Lazy load Axiom logger to avoid circular dependencies
+let axiomLogger = null;
+const getAxiomLogger = () => {
+  if (!axiomLogger && process.env.AXIOM_TOKEN) {
+    try {
+      axiomLogger = require('./axiomLogger');
+    } catch (err) {
+      // Axiom not available, continue without it
+    }
+  }
+  return axiomLogger;
+};
 
 /**
  * Security event types
@@ -16,6 +35,19 @@ const SecurityEventType = {
 };
 
 /**
+ * Log levels for filtering
+ */
+const LogLevel = {
+  DEBUG: 0,
+  INFO: 1,
+  WARN: 2,
+  ERROR: 3
+};
+
+// Current log level (can be set via environment variable)
+const currentLogLevel = LogLevel[process.env.LOG_LEVEL?.toUpperCase()] || LogLevel.INFO;
+
+/**
  * Sanitize log entry to prevent log injection
  * @param {string} value - Value to sanitize
  * @returns {string} Sanitized value
@@ -26,33 +58,60 @@ const sanitizeLogEntry = (value) => {
 };
 
 /**
+ * Get log level for event type
+ */
+const getLogLevel = (eventType) => {
+  switch (eventType) {
+    case SecurityEventType.AUTH_SUCCESS:
+      return LogLevel.INFO;
+    case SecurityEventType.AUTH_FAILURE:
+    case SecurityEventType.RATE_LIMIT_EXCEEDED:
+      return LogLevel.WARN;
+    case SecurityEventType.AUTH_LOCKOUT:
+    case SecurityEventType.UNAUTHORIZED_ACCESS:
+    case SecurityEventType.FILE_UPLOAD_BLOCKED:
+    case SecurityEventType.SUSPICIOUS_ACTIVITY:
+      return LogLevel.ERROR;
+    default:
+      return LogLevel.INFO;
+  }
+};
+
+/**
  * Log security event
  * @param {string} eventType - Type of security event
  * @param {Object} details - Event details
  */
 const logSecurityEvent = (eventType, details) => {
+  const level = getLogLevel(eventType);
+  
+  // Skip if below current log level
+  if (level < currentLogLevel) return;
+
   const logEntry = {
     timestamp: new Date().toISOString(),
+    level: Object.keys(LogLevel).find(k => LogLevel[k] === level),
     eventType,
     ip: sanitizeLogEntry(details.ip),
-    userId: details.userId !== undefined ? sanitizeLogEntry(details.userId) : null,
+    userId: details.userId !== undefined ? sanitizeLogEntry(String(details.userId)) : null,
     endpoint: sanitizeLogEntry(details.endpoint),
     userAgent: sanitizeLogEntry(details.userAgent),
     details: sanitizeLogEntry(details.message)
   };
 
-  // In production, send to logging service
-  // For now, log to console and file
-  console.log('[SECURITY]', JSON.stringify(logEntry));
+  // Always log to console (captured by Vercel/serverless platforms)
+  const logMethod = level >= LogLevel.ERROR ? console.error : 
+                    level >= LogLevel.WARN ? console.warn : console.log;
+  logMethod('[SECURITY]', JSON.stringify(logEntry));
 
-  // Optionally write to file
-  const logDir = path.join(__dirname, '../logs');
-  if (!fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir, { recursive: true });
+  // Send to Axiom if configured
+  const axiom = getAxiomLogger();
+  if (axiom) {
+    axiom.security(eventType, details);
   }
 
-  const logFile = path.join(logDir, `security-${new Date().toISOString().split('T')[0]}.log`);
-  fs.appendFileSync(logFile, JSON.stringify(logEntry) + '\n');
+  // File logging disabled - using Axiom for all environments
+  // Local files are not needed when using cloud logging service
 };
 
 /**
@@ -84,6 +143,7 @@ const requestLogger = (req, res, next) => {
 
 module.exports = {
   SecurityEventType,
+  LogLevel,
   logSecurityEvent,
   requestLogger,
   sanitizeLogEntry
