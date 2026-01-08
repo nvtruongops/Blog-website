@@ -4,12 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
-import DOMPurify from 'isomorphic-dompurify';
 import toast from 'react-hot-toast';
 import { CiBookmark, CiHeart } from 'react-icons/ci';
 import { BsDownload, BsFillBookmarkFill, BsThreeDotsVertical } from 'react-icons/bs';
 import Popup from 'reactjs-popup';
 import Footer from '../Footer';
+import { sanitizeHTML, escapeHTML } from '@/lib/sanitize';
 import {
   checklikes, decreastLike, increaseLike, bookmark, createcomment,
   getcomment, deletebookmark, checkbookmark, reportcontent, fetchprof,
@@ -35,7 +35,8 @@ export default function Article({ post, __id }) {
   const date = new Date(post.createdAt);
   const options = { month: 'long', day: 'numeric', year: 'numeric' };
   const formattedDate = date.toLocaleDateString('en-US', options);
-  const cleanHtml = DOMPurify.sanitize(post.content, { FORCE_BODY: true });
+  // Sanitize post content for safe rendering
+  const cleanHtml = sanitizeHTML(post.content);
 
   useEffect(() => {
     const init = async () => {
@@ -70,12 +71,19 @@ export default function Article({ post, __id }) {
   }, [__id, user, post.user]);
 
   const handleDownload = () => {
+    // Escape user-generated content to prevent XSS in print window
+    const safeTitle = escapeHTML(post.title);
+    const safeAuthorName = escapeHTML(postUser.name);
+    const safeCategory = escapeHTML(post.category?.toUpperCase() || '');
+    // Use already sanitized content for the body
+    const safeContent = sanitizeHTML(post.content);
+    
     // Create a printable version of the article
     const printContent = `
       <!DOCTYPE html>
       <html>
       <head>
-        <title>${post.title}</title>
+        <title>${safeTitle}</title>
         <style>
           body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
           h1 { color: #333; margin-bottom: 10px; }
@@ -94,13 +102,13 @@ export default function Article({ post, __id }) {
       </head>
       <body>
         <div class="author">
-          <img src="${postUser.picture || '/default-avatar.svg'}" alt="${postUser.name}" onerror="this.style.display='none'" />
-          <div class="author-info">${postUser.name}</div>
+          <img src="${postUser.picture || '/default-avatar.svg'}" alt="${safeAuthorName}" onerror="this.style.display='none'" />
+          <div class="author-info">${safeAuthorName}</div>
         </div>
-        <h1>${post.title}</h1>
-        <div class="meta">${formattedDate} | ${post.category?.toUpperCase()} | ${viewCount} views | ${likeCount} likes</div>
-        <img class="main-image" src="${post.image}" alt="${post.title}" onerror="this.style.display='none'" />
-        <div class="content">${post.content}</div>
+        <h1>${safeTitle}</h1>
+        <div class="meta">${formattedDate} | ${safeCategory} | ${viewCount} views | ${likeCount} likes</div>
+        <img class="main-image" src="${post.image}" alt="${safeTitle}" onerror="this.style.display='none'" />
+        <div class="content">${safeContent}</div>
       </body>
       </html>
     `;
