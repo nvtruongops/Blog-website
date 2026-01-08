@@ -1,98 +1,171 @@
 const Post = require("../models/Post");
 const User = require("../models/User");
+const { verifyOwnership } = require("../middleware/auth");
+const { sanitizeHTML } = require("../middleware/validator");
 
+/**
+ * Create a new post
+ * Content is sanitized before saving - Requirement 1.2
+ */
 exports.newPost = async (req, res) => {
   try {
-    const newPost = await new Post(req.body).save();
-    const datas = await User.findById(req.body.user);
-    datas.posts.push(newPost._id)
-    await datas.save();
+    // Ensure the user creating the post is the authenticated user - Requirement 3.1
+    if (!verifyOwnership(req.body.user, req.user.id)) {
+      return res.status(403).json({ message: "You can only create posts for your own account" });
+    }
+
+    // Sanitize content before saving - Requirement 1.2
+    const postData = {
+      ...req.body,
+      content: sanitizeHTML(req.body.content)
+    };
+
+    const newPost = await new Post(postData).save();
+    const userData = await User.findById(req.body.user);
+    
+    if (!userData) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    userData.posts.push(newPost._id);
+    await userData.save();
     await newPost.populate("user", "name picture");
     res.json(newPost);
   } catch (error) {
-    // console.log(error)
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: "An error occurred while creating the post" });
   }
 };
+
+/**
+ * Edit an existing post
+ * Verifies ownership before allowing edit - Requirement 3.1, 3.3
+ * Content is sanitized before saving - Requirement 1.2
+ */
 exports.editPost = async (req, res) => {
   try {
-    const newPost = await Post.findById(req.body.id);
-    newPost.title = req.body.title;
-    newPost.description = req.body.description;
-    newPost.content = req.body.content;
-    newPost.category = req.body.category;
-    newPost.image = req.body.image;
-    await newPost.save();
-    return res.status(200).json(newPost);
+    const post = await Post.findById(req.body.id);
+    
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    // Verify ownership - Requirement 3.1, 3.3
+    if (!verifyOwnership(post.user, req.user.id)) {
+      return res.status(403).json({ message: "You can only edit your own posts" });
+    }
+
+    // Update with sanitized content - Requirement 1.2
+    post.title = req.body.title;
+    post.description = req.body.description;
+    post.content = sanitizeHTML(req.body.content);
+    post.category = req.body.category;
+    post.image = req.body.image;
+    
+    await post.save();
+    return res.status(200).json(post);
   } catch (error) {
-    // console.log(error)
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: "An error occurred while editing the post" });
+  }
+};
+
+/**
+ * Delete a post
+ * Verifies ownership before allowing delete - Requirement 3.1, 3.3
+ */
+exports.deletePost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.body.id);
+    
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    // Verify ownership - Requirement 3.1, 3.3
+    if (!verifyOwnership(post.user, req.user.id)) {
+      return res.status(403).json({ message: "You can only delete your own posts" });
+    }
+
+    // Remove post from user's posts array
+    await User.findByIdAndUpdate(post.user, {
+      $pull: { posts: post._id }
+    });
+
+    await Post.findByIdAndDelete(req.body.id);
+    return res.status(200).json({ message: "Post deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "An error occurred while deleting the post" });
   }
 };
 exports.increaseView = async (req, res) => {
   try {
-    const increaseView = await Post.findById(req.body.id);
-    if (!increaseView) {
+    const post = await Post.findById(req.body.id);
+    if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
-    increaseView.views += 1;
-    await increaseView.save();
+    post.views += 1;
+    await post.save();
     res.json({ msg: "ok" });
   } catch (error) {
-    // console.log(error)
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: "An error occurred" });
   }
 };
 exports.getView = async (req, res) => {
   try {
-    const increaseView = await Post.findById(req.body.id);
-    res.json({ msg: "ok", view: increaseView.views });
+    const post = await Post.findById(req.body.id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    res.json({ msg: "ok", view: post.views });
   } catch (error) {
-    // console.log(error)
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: "An error occurred" });
   }
 };
 exports.getLikes = async (req, res) => {
   try {
-    const getLikesView = await Post.findById(req.body.id);
-    res.json({ msg: "ok", likes: getLikesView.likes });
+    const post = await Post.findById(req.body.id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    res.json({ msg: "ok", likes: post.likes });
   } catch (error) {
-    // console.log(error)
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: "An error occurred" });
   }
 };
 exports.increaseLike = async (req, res) => {
   try {
-
-    const increaseLike = await Post.findById(req.body.id);
-
-    increaseLike.likes += 1;
-    await increaseLike.save();
+    const post = await Post.findById(req.body.id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    post.likes += 1;
+    await post.save();
     res.json({ msg: "ok" });
   }
   catch (error) {
-    // console.log(error)
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: "An error occurred" });
   }
 }
 exports.decreastLike = async (req, res) => {
   try {
-    const increaseLike = await Post.findById(req.body.id);
-    if (increaseLike) {
-      increaseLike.likes -= 1;
-      if (increaseLike.likes < 0) {
-        increaseLike.likes = 0;
-      }
-      await increaseLike.save();
+    const post = await Post.findById(req.body.id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
     }
+    post.likes -= 1;
+    if (post.likes < 0) {
+      post.likes = 0;
+    }
+    await post.save();
     return res.json({ msg: "ok" });
   }
   catch (error) {
-    // console.log(error)
-    return res.status(500).json({ message: error.message });
-
+    return res.status(500).json({ message: "An error occurred" });
   }
 }
+/**
+ * Post a comment
+ * Content is sanitized before saving - Requirement 1.2
+ */
 exports.postcomment = async (req, res) => {
   try {
     const { name, image, content, commentBy, postId } = req.body;
@@ -101,8 +174,9 @@ exports.postcomment = async (req, res) => {
       return res.status(404).json({ msg: "Post not found" });
     }
     
+    // Sanitize comment content - Requirement 1.2
     const newComment = {
-      comment: content,
+      comment: sanitizeHTML(content),
       image: image,
       commentBy: commentBy,
       commentAt: new Date(),
@@ -113,22 +187,25 @@ exports.postcomment = async (req, res) => {
     await post.save();
     res.status(201).json({ msg: "ok" });
   } catch (error) {
-    res.status(400).json({ msg: "An Error Occurred" });
+    res.status(500).json({ msg: "An error occurred" });
   }
 }
 exports.getallpostdata = async (req, res) => {
   try {
     const { id } = req.body;
-    var data = await Post.findById(id);
-    return res.status(200).json({ msg: data })
+    const data = await Post.findById(id);
+    if (!data) {
+      return res.status(404).json({ msg: "Post not found" });
+    }
+    return res.status(200).json({ msg: data });
   } catch (error) {
-    return res.status(400).json({ msg: "error" });
+    return res.status(500).json({ msg: "An error occurred" });
   }
 }
 exports.getarticle = async (req, res) => {
   try {
     const { id } = req.body;
-    var data = await Post.findById(id);
+    const data = await Post.findById(id);
     if (!data) {
       return res.status(404).json({ msg: "!article" });
     }
@@ -137,10 +214,9 @@ exports.getarticle = async (req, res) => {
       return res.status(404).json({ msg: "!user" });
     }
     data.user = user;
-    return res.status(200).json({ msg: data })
+    return res.status(200).json({ msg: data });
   } catch (error) {
-    // console.log(error);
-    return res.status(400).json({ msg: "error" });
+    return res.status(500).json({ msg: "An error occurred" });
   }
 }
 exports.getcomment = async (req, res) => {
@@ -169,15 +245,16 @@ exports.getcomment = async (req, res) => {
     
     res.status(200).json(commentsWithUpdatedAvatars);
   } catch (error) {
-    res.status(400).json({ msg: "error" })
+    res.status(500).json({ msg: "An error occurred" });
   }
 }
 exports.allPost = async (req, res) => {
   try {
-    const page = parseInt(req.query.page);
-    const size = parseInt(req.query.size);
+    const page = parseInt(req.query.page) || 1;
+    const size = parseInt(req.query.size) || 10;
     const cat = req.body.mpost;
-    if (!cat || cat == "" || cat == "all") {
+    
+    if (!cat || cat === "" || cat === "all") {
       const skip = (page - 1) * size;
       const total = await Post.countDocuments();
       const posts = await Post.find().skip(skip).limit(size);
@@ -185,7 +262,7 @@ exports.allPost = async (req, res) => {
         posts.map((post) => post.populate("user", "name picture about"))
       );
 
-      res.status(201).send({
+      res.status(200).send({
         posts,
         total,
         page,
@@ -200,7 +277,7 @@ exports.allPost = async (req, res) => {
         posts.map((post) => post.populate("user", "name picture about"))
       );
 
-      res.status(201).send({
+      res.status(200).send({
         posts,
         total,
         page,
@@ -208,7 +285,6 @@ exports.allPost = async (req, res) => {
       });
     }
   } catch (error) {
-    // console.log(error);
-    res.status(400).json(error);
+    res.status(500).json({ message: "An error occurred" });
   }
 };
