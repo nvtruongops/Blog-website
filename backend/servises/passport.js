@@ -29,23 +29,22 @@ passport.use(new GoogleStrategy({
       let user = await User.findOne({ email: email });
       
       if (user) {
-        // Update existing user - chỉ cập nhật picture nếu user chưa có và Google có ảnh
-        if (!user.picture && photoUrl) {
-          user.picture = photoUrl;
-        }
-        
-        // First time linking Google to existing account
+        // User exists - link Google account if not already linked
         const isFirstGoogleLink = !user.googleId;
+        
         if (isFirstGoogleLink) {
           user.googleId = profile.id;
-          // If user doesn't have password set (shouldn't happen but just in case)
-          if (!user.hasSetPassword && !user.password) {
-            const tempPassword = generateRandomPassword();
-            const hashedPassword = await bcrypt.hash(tempPassword, 10);
-            user.password = hashedPassword;
-            user.tempPassword = tempPassword;
-            user.hasSetPassword = false;
+          
+          // If user registered with email/password before, they already have a password
+          // Mark hasSetPassword as true since they set it during registration
+          if (user.password && !user.hasSetPassword) {
+            user.hasSetPassword = true;
           }
+        }
+        
+        // Only update picture if user doesn't have one and Google provides one
+        if (!user.picture && photoUrl) {
+          user.picture = photoUrl;
         }
         
         if (!user.likeslist) {
@@ -77,7 +76,7 @@ passport.use(new GoogleStrategy({
         picture: photoUrl,
         name: profile.displayName,
         password: hashedPassword,
-        hasSetPassword: false,
+        hasSetPassword: false, // New Google user hasn't set their own password
         verify: true,
         likeslist: {},
         bookmarkslist: {}

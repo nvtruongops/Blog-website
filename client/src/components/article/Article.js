@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import DOMPurify from 'isomorphic-dompurify';
-import * as htmlToImage from 'html-to-image';
-import { jsPDF } from 'jspdf';
 import toast from 'react-hot-toast';
 import { CiBookmark, CiHeart } from 'react-icons/ci';
 import { BsDownload, BsFillBookmarkFill, BsThreeDotsVertical } from 'react-icons/bs';
@@ -72,15 +70,57 @@ export default function Article({ post, __id }) {
   }, [__id, user, post.user]);
 
   const handleDownload = () => {
-    htmlToImage.toPng(document.getElementById('article-content'), { quality: 1.0 })
-      .then((dataUrl) => {
-        const pdf = new jsPDF();
-        const imgProps = pdf.getImageProperties(dataUrl);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save('ALLBlogs.pdf');
-      });
+    // Create a printable version of the article
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${post.title}</title>
+        <style>
+          body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+          h1 { color: #333; margin-bottom: 10px; }
+          .meta { color: #666; font-size: 14px; margin-bottom: 20px; }
+          .author { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+          .author img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+          .author-info { font-weight: bold; }
+          .main-image { width: 100%; max-height: 400px; object-fit: cover; margin-bottom: 20px; border-radius: 8px; }
+          .content { line-height: 1.8; color: #333; }
+          .content img { max-width: 100%; height: auto; margin: 10px 0; }
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="author">
+          <img src="${postUser.picture || '/default-avatar.svg'}" alt="${postUser.name}" onerror="this.style.display='none'" />
+          <div class="author-info">${postUser.name}</div>
+        </div>
+        <h1>${post.title}</h1>
+        <div class="meta">${formattedDate} | ${post.category?.toUpperCase()} | ${viewCount} views | ${likeCount} likes</div>
+        <img class="main-image" src="${post.image}" alt="${post.title}" onerror="this.style.display='none'" />
+        <div class="content">${post.content}</div>
+      </body>
+      </html>
+    `;
+    
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      
+      // Wait for images to load then print
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+        }, 500);
+      };
+      
+      toast.success('Print dialog opened! Save as PDF to download.');
+    } else {
+      toast.error('Please allow popups to download');
+    }
   };
 
   const handleLike = async () => {
@@ -242,7 +282,12 @@ export default function Article({ post, __id }) {
                 ) : (
                   comments.map((c, i) => (
                     <div key={i} className={styles.commentItem}>
-                      <img src={c.image} alt={c.name} />
+                      <img 
+                        src={c.image || '/default-avatar.svg'} 
+                        alt={c.name} 
+                        referrerPolicy="no-referrer"
+                        onError={(e) => { e.target.src = '/default-avatar.svg'; }}
+                      />
                       <div>
                         <Link href={`/profile/${c.commentBy}`}>{c.name}</Link>
                         <span>{new Date(c.commentAt).toLocaleDateString()}</span>

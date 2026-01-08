@@ -1,5 +1,6 @@
 const nodemailer = require("nodemailer");
 const keys = require("../config/keys");
+const { APP_NAME, baseTemplate, codeBox } = require("./emailTemplate");
 
 exports.sendResetCode = (email, name, code) => {
   const transporter = nodemailer.createTransport({
@@ -9,65 +10,40 @@ exports.sendResetCode = (email, name, code) => {
       pass: keys.PASS,
     },
   });
-  // console.log(email)
-  const mailOptions = {
-    from: keys.EMAIL_ID,
-    to: email,
-    subject: "ALL Blogs-Forgot password varification code",
-    html: `<div 
-      style=
-      "max-width:700px;
-      margin-bottom:1rem;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-family:Roboto;
-      font-weight:600;
-      color:#3b5998"
-    >
-      <span>
-        Action required : RESET your PASSWORD
-      </span>
+
+  const content = `
+    <h2 style="margin: 0 0 20px; color: #212529; font-size: 22px; font-weight: 600;">
+      Reset Your Password
+    </h2>
+    <p style="margin: 0 0 15px; color: #495057; font-size: 16px; line-height: 1.6;">
+      Hello <strong>${name}</strong>,
+    </p>
+    <p style="margin: 0 0 15px; color: #495057; font-size: 16px; line-height: 1.6;">
+      We received a request to reset your password for your ${APP_NAME} account. Use the code below to complete the process:
+    </p>
+    ${codeBox(code)}
+    <p style="margin: 0 0 10px; color: #6c757d; font-size: 14px; line-height: 1.6;">
+      This code will expire in <strong>10 minutes</strong> for security reasons.
+    </p>
+    <div style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 15px; margin: 20px 0;">
+      <p style="margin: 0; color: #856404; font-size: 14px;">
+        ⚠️ <strong>Security Notice:</strong> If you didn't request a password reset, please ignore this email or contact support if you have concerns about your account security.
+      </p>
     </div>
-    <div
-    style=
-      "padding:1rem 0;
-      border-top:1px solid #e5e5e5;
-      border-bottom:1px solid #e5e5e5;
-      color:#141823;
-      font-size:17px;
-      font-family:Roboto"
-    >
-      <span>
-        Hello ${name}
-      </span>
-      <div 
-        style="padding:20px 0"
-      >
-        <span style="padding:1.5rem 0">
-          To change your password copy the code below and paste it to the confirmation box
-        </span>
-      </div>
-      <a 
-        style="width:200px;
-        padding:10px 15px;
-        background:#4c649b;
-        color:#fff;
-        text-decoration:none;
-        font-weight:600"
-      >
-        ${code}
-      </a>
-      <br>
-      <div style="padding-top:20px">
-        <span style="margin:1.5rem 0;color:#898f9c">
-        </span>
-      </div>
-    </div>`,
+  `;
+
+  const mailOptions = {
+    from: `"${APP_NAME}" <${keys.EMAIL_ID}>`,
+    to: email,
+    subject: `[${APP_NAME}] Password Reset Request`,
+    html: baseTemplate(content, `Your password reset code is: ${code}`),
   };
 
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
+      console.error("Password reset email error:", error.message);
+    } else {
+      console.log("Password reset email sent:", info.response);
     }
   });
 };

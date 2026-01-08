@@ -6,18 +6,33 @@ import { useRouter } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import Cookies from 'js-cookie';
 import axios from 'axios';
-import { BsSearch, BsPencilSquare } from 'react-icons/bs';
+import { BsSearch, BsPencilSquare, BsList, BsX } from 'react-icons/bs';
 import { logout } from '@/store/slices/userSlice';
 import { clearCookie, searchresult } from '@/lib/api';
 import styles from './Navbar.module.css';
 
-export default function Navbar({ postpage }) {
+const categories = ['all', 'food', 'travelling', 'lifestyle', 'tech'];
+
+export default function Navbar({ 
+  postpage, 
+  showFilters = false,
+  category,
+  setCategory,
+  filterBy,
+  setFilterBy,
+  sortBy,
+  setSortBy,
+  searchQuery,
+  setSearchQuery
+}) {
   const dispatch = useDispatch();
   const router = useRouter();
   const user = useSelector((state) => state.user);
   const [showSearch, setShowSearch] = useState(false);
   const [searchContent, setSearchContent] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [localSearch, setLocalSearch] = useState(searchQuery || '');
 
   const navigateToHome = () => router.push('/');
 
@@ -25,6 +40,20 @@ export default function Navbar({ postpage }) {
     if (searchContent === '') return;
     const data = await searchresult(searchContent);
     if (data.msg) setSearchResults(data.msg);
+  };
+
+  const handlePostSearch = () => {
+    if (setSearchQuery) {
+      setSearchQuery(localSearch);
+    }
+    setMenuOpen(false);
+  };
+
+  const handleCategoryClick = (cat) => {
+    if (setCategory) {
+      setCategory(cat);
+    }
+    setMenuOpen(false);
   };
 
   const logoutFunction = async (e) => {
@@ -44,11 +73,91 @@ export default function Navbar({ postpage }) {
   return (
     <nav className={styles.navbar}>
       {showSearch && <div className={styles.overlay} onClick={() => setShowSearch(false)} />}
+      {menuOpen && <div className={styles.overlay} onClick={() => setMenuOpen(false)} />}
 
-      <div className={styles.logo} onClick={navigateToHome}>
-        <img src="/logo.png" alt="HOME" />
-        <span>All Blogs</span>
+      <div className={styles.leftSection}>
+        {/* Hamburger Menu - only show on homepage with filters */}
+        {showFilters && (
+          <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)}>
+            {menuOpen ? <BsX size={24} /> : <BsList size={24} />}
+          </button>
+        )}
+
+        <div className={styles.logo} onClick={navigateToHome}>
+          <img src="/logo.png" alt="HOME" />
+          <span>All Blogs</span>
+        </div>
       </div>
+
+      {/* Filter Menu Dropdown */}
+      {showFilters && menuOpen && (
+        <div className={styles.filterMenu}>
+          <div className={styles.filterSection}>
+            <h4>Search Posts</h4>
+            <div className={styles.filterSearchBox}>
+              <input
+                type="text"
+                placeholder="Search blogs..."
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handlePostSearch()}
+              />
+              <button onClick={handlePostSearch}>
+                <BsSearch />
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.filterSection}>
+            <h4>Categories</h4>
+            <div className={styles.categoryList}>
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  className={`${styles.categoryBtn} ${category === cat ? styles.active : ''}`}
+                  onClick={() => handleCategoryClick(cat)}
+                >
+                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.filterSection}>
+            <h4>Filter & Sort</h4>
+            <div className={styles.filterOptions}>
+              <div className={styles.filterGroup}>
+                <span className={styles.filterLabel}>Filter:</span>
+                <div className={styles.filterButtons}>
+                  {['latest', 'popular', 'trending'].map((f) => (
+                    <button
+                      key={f}
+                      className={`${styles.filterBtn} ${filterBy === f ? styles.active : ''}`}
+                      onClick={() => setFilterBy(f)}
+                    >
+                      {f.charAt(0).toUpperCase() + f.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.filterGroup}>
+                <span className={styles.filterLabel}>Sort:</span>
+                <div className={styles.filterButtons}>
+                  {['date', 'views', 'likes'].map((s) => (
+                    <button
+                      key={s}
+                      className={`${styles.filterBtn} ${sortBy === s ? styles.active : ''}`}
+                      onClick={() => setSortBy(s)}
+                    >
+                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className={styles.search}>
         <div className={styles.searchWrap}>
@@ -58,7 +167,7 @@ export default function Navbar({ postpage }) {
             onChange={(e) => { setSearchContent(e.target.value); setShowSearch(true); onSearchChange(); }}
             type="text"
             value={searchContent}
-            placeholder="Search..."
+            placeholder="Search users..."
           />
           {showSearch && searchResults.length > 0 && (
             <div className={styles.searchResult}>

@@ -150,7 +150,24 @@ exports.getcomment = async (req, res) => {
     if (!data) {
       return res.status(404).json({ msg: "Post not found" });
     }
-    res.status(200).json(data.comments || []);
+    
+    // Fetch current user info for each comment to get updated avatars
+    const commentsWithUpdatedAvatars = await Promise.all(
+      (data.comments || []).map(async (comment) => {
+        try {
+          const user = await User.findById(comment.commentBy).select('picture name');
+          return {
+            ...comment.toObject(),
+            image: user?.picture || comment.image || '',
+            name: user?.name || comment.name
+          };
+        } catch {
+          return comment;
+        }
+      })
+    );
+    
+    res.status(200).json(commentsWithUpdatedAvatars);
   } catch (error) {
     res.status(400).json({ msg: "error" })
   }

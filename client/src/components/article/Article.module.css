@@ -245,7 +245,10 @@
 .commentItem img {
   width: 40px;
   height: 40px;
+  min-width: 40px;
   border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg-secondary);
 }
 
 .commentItem a {

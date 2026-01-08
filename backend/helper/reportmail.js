@@ -1,5 +1,6 @@
 const nodemailer = require("nodemailer");
 const keys = require("../config/keys");
+const { APP_NAME, baseTemplate, button, infoBox } = require("./emailTemplate");
 
 exports.sendReportMail = (email1, email2, name1, name2, reason, postid) => {
   const transporter = nodemailer.createTransport({
@@ -9,188 +10,101 @@ exports.sendReportMail = (email1, email2, name1, name2, reason, postid) => {
       pass: keys.PASS,
     },
   });
-  const mailOptions3 = {
-    from: keys.EMAIL_ID,
-    to: keys.EMAIL_ID,
-    subject: "Someone Requested Report",
-    html: `<div 
-      style=
-      "max-width:700px;
-      margin-bottom:1rem;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-family:Roboto;
-      font-weight:600;
-      color:#3b5998"
-    >
-      <span>
-        Someone has requested an report action
-      </span>
+
+  // Email to Admin
+  const adminContent = `
+    <h2 style="margin: 0 0 20px; color: #212529; font-size: 22px; font-weight: 600;">
+      🚨 New Report Received
+    </h2>
+    <p style="margin: 0 0 15px; color: #495057; font-size: 16px; line-height: 1.6;">
+      Hello <strong>Admin</strong>,
+    </p>
+    <p style="margin: 0 0 15px; color: #495057; font-size: 16px; line-height: 1.6;">
+      A new content report has been submitted and requires your attention.
+    </p>
+    ${infoBox([
+      { label: "Reporter", value: `${name2} (${email2})` },
+      { label: "Reported User", value: `${name1} (${email1})` },
+      { label: "Post ID", value: postid },
+      { label: "Reason", value: reason }
+    ])}
+    <p style="margin: 20px 0 0; color: #6c757d; font-size: 14px;">
+      Please review this report and take appropriate action.
+    </p>
+  `;
+
+  // Email to reported user
+  const reportedUserContent = `
+    <h2 style="margin: 0 0 20px; color: #212529; font-size: 22px; font-weight: 600;">
+      Content Report Notice
+    </h2>
+    <p style="margin: 0 0 15px; color: #495057; font-size: 16px; line-height: 1.6;">
+      Hello <strong>${name1}</strong>,
+    </p>
+    <p style="margin: 0 0 15px; color: #495057; font-size: 16px; line-height: 1.6;">
+      We've received a report regarding one of your posts on ${APP_NAME}.
+    </p>
+    <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px; padding: 15px; margin: 20px 0;">
+      <p style="margin: 0; color: #721c24; font-size: 14px; line-height: 1.6;">
+        <strong>Important:</strong> Our team will review the reported content. If it violates our community guidelines, it may be removed. Repeated violations could result in account restrictions.
+      </p>
     </div>
-    <div
-    style=
-      "padding:1rem 0;
-      border-top:1px solid #e5e5e5;
-      border-bottom:1px solid #e5e5e5;
-      color:#141823;
-      font-size:17px;
-      font-family:Roboto"
-    >
-      <span>
-        Hello Admin
-      </span>
-      <div 
-        style="padding:20px 0"
-      >
-        <span style="padding:1.5rem 0">
-            ${name2} has requested action on post id ${postid}
-        </span>
-      </div>
-      <a 
-        style="width:200px;
-        padding:10px 15px;
-        background:#4c649b;
-        color:#fff;
-        text-decoration:none;
-        font-weight:600"
-      >
-        Request Action
-      </a>
-      <br>
-      <div>
-        Request User Mail: ${email2}<br/>
-        Reported user Mail: ${email1}<br/>
-        Reported content id: ${postid}<br/>
-        Reason: ${reason}
-      </div>
-      <div style="padding-top:20px">
-        <span style="margin:1.5rem 0;color:#898f9c">
-        </span>
-      </div>
-    </div>`,
-  };
-  const mailOptions = {
-    from: keys.EMAIL_ID,
-    to: keys.EMAIL_ID,
-    subject: "Report on one of your Blogs",
-    html: `<div 
-      style=
-      "max-width:700px;
-      margin-bottom:1rem;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-family:Roboto;
-      font-weight:600;
-      color:#3b5998"
-    >
-      <span>
-        Someone has reported on One of your blog
-      </span>
+    <p style="margin: 0; color: #6c757d; font-size: 14px; line-height: 1.6;">
+      If you believe this report was made in error, please reply to this email with your explanation.
+    </p>
+  `;
+
+  // Email to reporter (confirmation)
+  const reporterContent = `
+    <h2 style="margin: 0 0 20px; color: #212529; font-size: 22px; font-weight: 600;">
+      Report Received ✓
+    </h2>
+    <p style="margin: 0 0 15px; color: #495057; font-size: 16px; line-height: 1.6;">
+      Hello <strong>${name2}</strong>,
+    </p>
+    <p style="margin: 0 0 15px; color: #495057; font-size: 16px; line-height: 1.6;">
+      Thank you for helping keep ${APP_NAME} a safe and respectful community. We've received your report and our team will review it shortly.
+    </p>
+    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; padding: 15px; margin: 20px 0;">
+      <p style="margin: 0; color: #155724; font-size: 14px;">
+        ✅ Your report has been successfully submitted and is being processed.
+      </p>
     </div>
-    <div
-    style=
-      "padding:1rem 0;
-      border-top:1px solid #e5e5e5;
-      border-bottom:1px solid #e5e5e5;
-      color:#141823;
-      font-size:17px;
-      font-family:Roboto"
-    >
-      <span>
-        Hello ${name1}
-      </span>
-      <div 
-        style="padding:20px 0"
-      >
-        <span style="padding:1.5rem 0">
-            Someone has reported on your blog(blog link). If you have violated our terms and conditions then we have to remove your blog, and repeating this violations may lead to permanent ban on your account. 
-        </span>
-      </div>
-      <a 
-        
-      >
-        To <b>Request Action</b> reply to this email
-      </a>
-      <br>
-      <div style="padding-top:20px">
-        <span style="margin:1.5rem 0;color:#898f9c">
-        </span>
-      </div>
-    </div>`,
+    <p style="margin: 0; color: #6c757d; font-size: 14px; line-height: 1.6;">
+      We take all reports seriously and will take appropriate action if the content violates our guidelines. Thank you for your patience.
+    </p>
+  `;
+
+  const mailToAdmin = {
+    from: `"${APP_NAME}" <${keys.EMAIL_ID}>`,
+    to: keys.EMAIL_ID,
+    subject: `[${APP_NAME}] 🚨 New Report - Post #${postid}`,
+    html: baseTemplate(adminContent, `New report from ${name2} on post ${postid}`),
   };
-  const mailOptions2 = {
-    from: keys.EMAIL_ID,
+
+  const mailToReportedUser = {
+    from: `"${APP_NAME}" <${keys.EMAIL_ID}>`,
+    to: email1,
+    subject: `[${APP_NAME}] Notice: Your Content Has Been Reported`,
+    html: baseTemplate(reportedUserContent, "Your content has been reported"),
+  };
+
+  const mailToReporter = {
+    from: `"${APP_NAME}" <${keys.EMAIL_ID}>`,
     to: email2,
-    subject: "All Blogs Support Team",
-    html: `<div 
-      style=
-      "max-width:700px;
-      margin-bottom:1rem;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-family:Roboto;
-      font-weight:600;
-      color:#3b5998"
-    >
-      <span>
-        <i>All blog Support Team</i>
-      </span>
-    </div>
-    <div
-    style=
-      "padding:1rem 0;
-      border-top:1px solid #e5e5e5;
-      border-bottom:1px solid #e5e5e5;
-      color:#141823;
-      font-size:17px;
-      font-family:Roboto"
-    >
-      <span>
-        Hello ${name2}
-      </span>
-      <div 
-        style="padding:20px 0"
-      >
-        <span style="padding:1.5rem 0">
-            Your complaint has successfully been received, Our team will review your complaint and will take action accordingly as soon as possible.
-            <br/>
-
-        </span>
-      </div>
-      <a 
-        style="width:200px;
-        padding:10px 15px;
-        background:#4c649b;
-        color:#fff;
-        text-decoration:none;
-        font-weight:600"
-      >
-        Request Action
-      </a>
-      <br>
-      <div style="padding-top:20px">
-        <span style="margin:1.5rem 0;color:#898f9c">
-        </span>
-      </div>
-    </div>`,
+    subject: `[${APP_NAME}] Your Report Has Been Received`,
+    html: baseTemplate(reporterContent, "Thank you for your report"),
   };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      // console.log(error);
-    }
+  transporter.sendMail(mailToAdmin, (error, info) => {
+    if (error) console.error("Admin notification error:", error.message);
   });
-  transporter.sendMail(mailOptions3, (error, info) => {
-    if (error) {
-      // console.log(error);
-    }
+
+  transporter.sendMail(mailToReportedUser, (error, info) => {
+    if (error) console.error("Reported user notification error:", error.message);
   });
-  transporter.sendMail(mailOptions2, (error, info) => {
-    if (error) {
-      // console.log(error);
-    }
+
+  transporter.sendMail(mailToReporter, (error, info) => {
+    if (error) console.error("Reporter confirmation error:", error.message);
   });
 };

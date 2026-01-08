@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Cookies from 'js-cookie';
 import Navbar from '@/components/Navbar';
-import Card from '@/components/home/Card';
 import Breaker from '@/components/home/Breaker';
 import Posts from '@/components/home/Posts';
 import Footer from '@/components/Footer';
@@ -34,8 +33,8 @@ export default function HomePage() {
 
   return (
     <div className="HomePage">
-      <Navbar user={user} />
-      <Card 
+      <Navbar 
+        showFilters={true}
         category={category}
         setCategory={setCategory}
         filterBy={filterBy}
@@ -45,13 +44,15 @@ export default function HomePage() {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
       />
-      <Breaker text="Featured Post" />
-      <Posts 
-        category={category} 
-        filterBy={filterBy}
-        sortBy={sortBy}
-        searchQuery={searchQuery}
-      />
+      <div style={{ marginTop: '70px' }}>
+        <Breaker text="Featured Post" />
+        <Posts 
+          category={category} 
+          filterBy={filterBy}
+          sortBy={sortBy}
+          searchQuery={searchQuery}
+        />
+      </div>
       <Footer />
     </div>
   );

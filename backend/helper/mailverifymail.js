@@ -1,5 +1,6 @@
 const nodemailer = require("nodemailer");
 const keys = require("../config/keys");
+const { APP_NAME, baseTemplate, codeBox } = require("./emailTemplate");
 
 exports.sendVerifyCode = (email, name, code) => {
   console.log("=== SENDING VERIFICATION EMAIL ===");
@@ -15,60 +16,30 @@ exports.sendVerifyCode = (email, name, code) => {
     },
   });
 
+  const content = `
+    <h2 style="margin: 0 0 20px; color: #212529; font-size: 22px; font-weight: 600;">
+      Verify Your Email Address
+    </h2>
+    <p style="margin: 0 0 15px; color: #495057; font-size: 16px; line-height: 1.6;">
+      Hello <strong>${name}</strong>,
+    </p>
+    <p style="margin: 0 0 15px; color: #495057; font-size: 16px; line-height: 1.6;">
+      Welcome to ${APP_NAME}! To complete your registration and start sharing your stories, please verify your email address using the code below:
+    </p>
+    ${codeBox(code)}
+    <p style="margin: 0 0 10px; color: #6c757d; font-size: 14px; line-height: 1.6;">
+      This code will expire in <strong>10 minutes</strong> for security reasons.
+    </p>
+    <p style="margin: 0; color: #6c757d; font-size: 14px; line-height: 1.6;">
+      If you didn't create an account with ${APP_NAME}, you can safely ignore this email.
+    </p>
+  `;
+
   const mailOptions = {
-    from: keys.EMAIL_ID,
+    from: `"${APP_NAME}" <${keys.EMAIL_ID}>`,
     to: email,
-    subject: "ALL Blogs Email Verification Code",
-    html: `<div 
-      style=
-      "max-width:700px;
-      margin-bottom:1rem;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-family:Roboto;
-      font-weight:600;
-      color:#3b5998"
-    >
-      <span>
-        Action required : Verify Your Email
-      </span>
-    </div>
-    <div
-    style=
-      "padding:1rem 0;
-      border-top:1px solid #e5e5e5;
-      border-bottom:1px solid #e5e5e5;
-      color:#141823;
-      font-size:17px;
-      font-family:Roboto"
-    >
-      <span>
-        Hello ${name}
-      </span>
-      <div 
-        style="padding:20px 0"
-      >
-        <span style="padding:1.5rem 0">
-          To Verify your Email, put below code into otp box
-        </span>
-      </div>
-      <a 
-        style="width:200px;
-        padding:10px 15px;
-        background:#4c649b;
-        color:#fff;
-        text-decoration:none;
-        font-weight:600"
-      >
-        Verification Code: ${code}
-      </a>
-      <br>
-      <div style="padding-top:20px">
-        <span style="margin:1.5rem 0;color:#898f9c">
-        </span>
-      </div>
-    </div>`,
+    subject: `[${APP_NAME}] Verify Your Email Address`,
+    html: baseTemplate(content, `Your verification code is: ${code}`),
   };
 
   transporter.sendMail(mailOptions, (error, info) => {
