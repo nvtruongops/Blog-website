@@ -50,8 +50,10 @@ export default function RootLayout({ children }) {
         {/* X-Content-Type-Options - Prevent MIME type sniffing */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
         
-        {/* X-Frame-Options - Prevent clickjacking (fallback for older browsers) */}
-        <meta httpEquiv="X-Frame-Options" content="SAMEORIGIN" />
+        {/* 
+          Note: X-Frame-Options cannot be set via meta tag - it must be set via HTTP header.
+          This is already configured in backend/middleware/security.js via Helmet.
+        */}
         
         {/* Referrer Policy - Control referrer information */}
         <meta name="referrer" content="strict-origin-when-cross-origin" />

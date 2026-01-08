@@ -1,6 +1,25 @@
 import axios from 'axios';
+import Cookies from 'js-cookie';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+/**
+ * Get JWT token from user cookie
+ * @returns {string|null} JWT token or null
+ */
+const getAuthToken = () => {
+  if (typeof window === 'undefined') return null;
+  const userCookie = Cookies.get('user');
+  if (userCookie) {
+    try {
+      const userData = JSON.parse(userCookie);
+      return userData?.token || null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
 
 /**
  * CSRF Token Management
@@ -53,13 +72,19 @@ const createSecureAxios = () => {
     withCredentials: true,
   });
 
-  // Add CSRF token to state-changing requests
+  // Add CSRF token and JWT auth to state-changing requests
   instance.interceptors.request.use(async (config) => {
     const stateChangingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
     if (stateChangingMethods.includes(config.method?.toUpperCase())) {
       const token = await getCSRFToken();
       if (token) {
         config.headers['X-CSRF-Token'] = token;
+      }
+      
+      // Add JWT token for authenticated requests
+      const authToken = getAuthToken();
+      if (authToken) {
+        config.headers['Authorization'] = `Bearer ${authToken}`;
       }
     }
     return config;
@@ -83,11 +108,8 @@ const createSecureAxios = () => {
         csrfToken = null; // Clear invalid token
       }
       
-      // Handle authentication errors
-      if (error.response?.status === 401) {
-        // Token expired or invalid - could trigger logout
-        console.warn('Authentication error:', error.response?.data?.message);
-      }
+      // Handle authentication errors silently - let calling code handle it
+      // 401 errors are expected when user is not logged in
 
       // Handle rate limiting
       if (error.response?.status === 429) {
@@ -331,10 +353,17 @@ export const decreastLike = async (id) => {
   }
 };
 
-export const createcomment = async (name, image, comment, commentBy, postId) => {
+export const createcomment = async (name, image, comment, commentBy, postId, token) => {
   try {
-    const { data } = await secureAxios.post('/postcomment', {
+    const csrfTokenValue = await getCSRFToken();
+    const { data } = await axios.post(`${API_URL}/postcomment`, {
       name, image, content: comment, commentBy, postId
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'X-CSRF-Token': csrfTokenValue,
+      },
+      withCredentials: true,
     });
     if (!isValidResponse(data)) return { msg: 'error' };
     return data;

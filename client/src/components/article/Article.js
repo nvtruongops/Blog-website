@@ -57,14 +57,21 @@ export default function Article({ post, __id }) {
       }
 
       if (user) {
-        const followData = await checkfollowing(user.id, post.user._id || post.user);
-        setIsFollowing(followData.msg === 'ok');
+        try {
+          const followData = await checkfollowing(user.id, post.user._id || post.user);
+          setIsFollowing(followData.msg === 'ok');
 
-        const bookmarkData = await checkbookmark(__id, user.id);
-        setIsBookmarked(bookmarkData.msg === 'ok');
+          const bookmarkData = await checkbookmark(__id, user.id);
+          setIsBookmarked(bookmarkData.msg === 'ok');
 
-        const likeData = await checklikes(__id, user.id);
-        setIsLiked(likeData.msg === 'ok');
+          const likeData = await checklikes(__id, user.id);
+          setIsLiked(likeData.msg === 'ok');
+        } catch (error) {
+          // Silently handle auth errors - user session may have expired
+          if (error.response?.status !== 401) {
+            console.error('Error fetching user state:', error);
+          }
+        }
       }
     };
     init();
@@ -182,14 +189,26 @@ export default function Article({ post, __id }) {
   };
 
   const handleComment = async () => {
+    if (!user) {
+      toast.error('Please log in to comment');
+      return;
+    }
     if (comment.length <= 0 || comment.length >= 550) {
       alert('Comment must be between 1 and 550 characters');
       return;
     }
-    const data = await createcomment(user.name, user.picture, comment, user.id, __id);
-    if (data.msg === 'ok') {
-      setComment('');
-      loadComments();
+    try {
+      const data = await createcomment(user.name, user.picture, comment, user.id, __id, user.token);
+      if (data.msg === 'ok') {
+        setComment('');
+        loadComments();
+      }
+    } catch (error) {
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please log in again.');
+      } else {
+        toast.error('Failed to post comment');
+      }
     }
   };
 
