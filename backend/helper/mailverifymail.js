@@ -2,11 +2,13 @@ const nodemailer = require("nodemailer");
 const keys = require("../config/keys");
 const { APP_NAME, baseTemplate, codeBox } = require("./emailTemplate");
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 exports.sendVerifyCode = (email, name, code) => {
-  console.log("=== SENDING VERIFICATION EMAIL ===");
-  console.log("To:", email);
-  console.log("From:", keys.EMAIL_ID);
-  console.log("Code:", code);
+  // Only log in development (avoid exposing sensitive data in production)
+  if (!isProduction) {
+    console.log("[EMAIL] Sending verification to:", email);
+  }
   
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -44,12 +46,9 @@ exports.sendVerifyCode = (email, name, code) => {
 
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
-      console.error("=== EMAIL ERROR ===");
-      console.error("Error:", error.message);
-      console.error("Full error:", error);
-    } else {
-      console.log("=== EMAIL SENT SUCCESSFULLY ===");
-      console.log("Response:", info.response);
+      console.error("[EMAIL] Verification email failed:", error.message);
+    } else if (!isProduction) {
+      console.log("[EMAIL] Verification email sent successfully");
     }
   });
 };

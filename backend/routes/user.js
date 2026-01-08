@@ -56,7 +56,7 @@ var GoogleStrategy = require('passport-google-oidc');
 
 const router = express.Router();
 const app = express();
-const { authUser } = require("../middleware/auth");
+const { authUser, optionalAuth } = require("../middleware/auth");
 
 // Import validation middleware - Requirements 1.1
 const {
@@ -102,13 +102,13 @@ router.post("/changeuserpassword", authUser, changeUserPassword);
 // Bookmark routes - require authentication for state-changing operations
 router.post("/setbookmark", authUser, bookmark);
 router.post("/deletebookmark", authUser, deletebookmark);
-router.post("/checkbookmark", authUser, checkbookmark);
+router.post("/checkbookmark", optionalAuth, checkbookmark);
 
 // Likes routes - require authentication for state-changing operations
 router.post("/setlikes", authUser, likes);
 router.post("/getallLikes", authUser, getallLikes);
 router.post("/deletelikes", authUser, deletelikes);
-router.post("/checklikes", authUser, checklikes);
+router.post("/checklikes", optionalAuth, checklikes);
 
 router.post("/reportcontent", sendreportmails);
 router.post("/countfollower", followercount);
@@ -123,7 +123,7 @@ router.post("/fetchfollowing", fetchfollowing);
 // Follow routes - require authentication for state-changing operations
 router.post("/startfollow", authUser, follow);
 router.post("/unfollow", authUser, unfollow);
-router.post("/checkfollow", authUser, checkfollowing);
+router.post("/checkfollow", optionalAuth, checkfollowing);
 
 router.post("/searchresult", searchresult);
 

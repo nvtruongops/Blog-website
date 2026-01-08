@@ -22,9 +22,16 @@ const sanitizeHTML = (dirty) => {
   if (typeof dirty !== 'string') {
     return '';
   }
-  return DOMPurify.sanitize(dirty, {
+  
+  // First pass: remove style tags and their content (including malformed ones)
+  let cleaned = dirty.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
+  
+  // Second pass: DOMPurify sanitization
+  return DOMPurify.sanitize(cleaned, {
     ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li', 'a', 'img', 'h1', 'h2', 'h3', 'blockquote', 'code', 'pre'],
-    ALLOWED_ATTR: ['href', 'src', 'alt', 'class']
+    ALLOWED_ATTR: ['href', 'src', 'alt', 'class'],
+    FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'meta', 'link', 'svg', 'math'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onmouseout', 'onkeydown', 'onkeyup', 'onkeypress']
   });
 };
 
