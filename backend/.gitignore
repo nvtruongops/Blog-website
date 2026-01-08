@@ -15,6 +15,10 @@
 /uploads
 /tmp
 
+# logs - security sensitive
+/logs
+*.log
+
 # misc
 .DS_Store
 .env
