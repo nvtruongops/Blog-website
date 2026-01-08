@@ -11,7 +11,10 @@ if (process.env.NODE_ENV === 'production') {
         EMAIL_ID: process.env.EMAIL_ID_PRODUCTION,
         PORT: process.env.PORT_PRODUCTION,
         BACKEND_URL: process.env.REACT_APP_BACKEND_URL_PRODUCTION,
-        FRONTEND_URL: process.env.REACT_APP_FRONTEND_URL_PRODUCTION
+        FRONTEND_URL: process.env.REACT_APP_FRONTEND_URL_PRODUCTION,
+        CLOUDINARY_NAME: process.env.CLOUDINARY_NAME,
+        CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+        CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
     }
 }
 else {
@@ -25,6 +28,9 @@ else {
         EMAIL_ID: process.env.EMAIL_ID,
         PORT: process.env.PORT,
         BACKEND_URL: process.env.REACT_APP_BACKEND_URL,
-        FRONTEND_URL: process.env.REACT_APP_FRONTEND_URL
+        FRONTEND_URL: process.env.REACT_APP_FRONTEND_URL,
+        CLOUDINARY_NAME: process.env.CLOUDINARY_NAME,
+        CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+        CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
     }
 }
