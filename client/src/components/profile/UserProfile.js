@@ -393,7 +393,12 @@ export default function UserProfile() {
             ) : (
               <div className={styles.followingList}>
                 {following.map((f, i) => (
-                  <div key={i} className={styles.followItem}>
+                  <div 
+                    key={i} 
+                    className={styles.followItem}
+                    onClick={() => router.push(`/profile/${f.pid}`)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <img src={f.pic} alt={f.name} />
                     <span>{f.name}</span>
                   </div>

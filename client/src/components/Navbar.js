@@ -102,6 +102,15 @@ export default function Navbar({
                 onChange={(e) => setLocalSearch(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handlePostSearch()}
               />
+              {localSearch && (
+                <button 
+                  className={styles.clearFilterSearch}
+                  onClick={() => { setLocalSearch(''); if (setSearchQuery) setSearchQuery(''); }}
+                  type="button"
+                >
+                  <BsX size={18} />
+                </button>
+              )}
               <button onClick={handlePostSearch}>
                 <BsSearch />
               </button>
@@ -169,11 +178,24 @@ export default function Navbar({
             value={searchContent}
             placeholder="Search users..."
           />
+          {searchContent && (
+            <button 
+              className={styles.clearSearch} 
+              onClick={() => { setSearchContent(''); setSearchResults([]); setShowSearch(false); }}
+              type="button"
+            >
+              <BsX size={18} />
+            </button>
+          )}
           {showSearch && searchResults.length > 0 && (
             <div className={styles.searchResult}>
               <ul className={styles.searchList}>
                 {searchResults.map((i, idx) => (
-                  <li key={idx} className={styles.listItem}>
+                  <li 
+                    key={idx} 
+                    className={styles.listItem}
+                    onClick={() => { setShowSearch(false); setSearchContent(''); setSearchResults([]); }}
+                  >
                     <img className={styles.searchImg} src={i.pic || '/default-avatar.svg'} alt="" />
                     <Link href={user ? `/profile/${i.id}` : '/auth'}>
                       <p>{i.name}</p>

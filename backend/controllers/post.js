@@ -211,11 +211,19 @@ exports.getarticle = async (req, res) => {
     }
     const user = await User.findById(data.user).select("name picture about");
     if (!user) {
-      return res.status(404).json({ msg: "!user" });
+      // Return article with minimal user info if user not found
+      return res.status(200).json({ 
+        msg: { 
+          ...data.toObject(), 
+          user: { name: "Unknown", picture: "", about: "" } 
+        } 
+      });
     }
-    data.user = user;
-    return res.status(200).json({ msg: data });
+    const result = data.toObject();
+    result.user = user;
+    return res.status(200).json({ msg: result });
   } catch (error) {
+    console.error('getarticle error:', error.message);
     return res.status(500).json({ msg: "An error occurred" });
   }
 }

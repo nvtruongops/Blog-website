@@ -25,12 +25,19 @@ const configureHelmet = () => {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        scriptSrc: [
+          "'self'", 
+          "'unsafe-inline'", 
+          "'unsafe-eval'",
+          "https://cdnjs.cloudflare.com",
+          "https://accounts.google.com",
+          "https://apis.google.com"
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
         imgSrc: ["'self'", "data:", "https:", "blob:"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
         connectSrc: ["'self'", process.env.BACKEND_URL || "http://localhost:8000", process.env.FRONTEND_URL || "http://localhost:3000"],
-        frameSrc: ["'none'"],
+        frameSrc: ["'self'", "https://accounts.google.com"],
         objectSrc: ["'none'"]
       }
     },

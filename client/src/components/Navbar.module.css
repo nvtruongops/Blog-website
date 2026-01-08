@@ -228,8 +228,7 @@
 }
 
 .input {
-  padding: 0.5rem 1rem;
-  padding-left: 2.25rem;
+  padding: 0.5rem 2rem 0.5rem 2.25rem;
   background: var(--bg-input);
   border: 2px solid var(--border-color);
   border-radius: var(--radius-full);
@@ -303,6 +302,44 @@
   transform: translateY(-50%);
   color: var(--text-muted);
   cursor: pointer;
+}
+
+.clearSearch {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  transition: var(--transition);
+}
+
+.clearSearch:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.clearFilterSearch {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.clearFilterSearch:hover {
+  color: var(--brown-dark);
 }
 
 .links {

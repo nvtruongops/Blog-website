@@ -172,6 +172,8 @@ export default function Article({ post, __id }) {
 
   const handleFollow = async () => {
     if (!user) { router.push('/auth'); return; }
+    // Prevent following yourself
+    if (user.id === postUser._id) return;
     await startfollow(user.id, postUser._id);
     setIsFollowing(true);
   };
@@ -233,9 +235,11 @@ export default function Article({ post, __id }) {
             </Link>
             <span className={styles.userAbout}>&quot;{postUser.about || 'User'}&quot;</span>
           </div>
-          <div className={styles.followBtn} onClick={isFollowing ? handleUnfollow : handleFollow}>
-            {isFollowing ? 'Following' : '+Follow'}
-          </div>
+          {user?.id !== postUser._id && (
+            <div className={styles.followBtn} onClick={isFollowing ? handleUnfollow : handleFollow}>
+              {isFollowing ? 'Following' : '+Follow'}
+            </div>
+          )}
           <div className={styles.actions}>
             <BsDownload size={25} onClick={handleDownload} className={styles.icon} />
             {isLiked ? (

@@ -688,6 +688,12 @@ exports.showyourposts = async (req, res) => {
 exports.follow = async (req, res) => {
   try {
     const { id, id2 } = req.body;
+    
+    // Prevent user from following themselves
+    if (id === id2) {
+      return res.status(400).json({ msg: "You cannot follow yourself" });
+    }
+    
     const user = await User.findById(id);
     const user2 = await User.findById(id2);
     
