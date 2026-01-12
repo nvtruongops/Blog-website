@@ -25,14 +25,16 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Create Vercel project config
-        run: |
-          mkdir -p .vercel
-          echo '{"projectId":"${{ secrets.VERCEL_BACKEND_PROJECT_ID }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
+      - name: Pull Vercel Environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: ./backend
 
-      - name: Deploy Backend to Vercel
-        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+      - name: Build Project
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: ./backend
+
+      - name: Deploy to Vercel
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: ./backend
 
   deploy-client:
@@ -53,12 +55,14 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Create Vercel project config
-        run: |
-          mkdir -p .vercel
-          echo '{"projectId":"${{ secrets.VERCEL_CLIENT_PROJECT_ID }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
+      - name: Pull Vercel Environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: ./client
 
-      - name: Deploy Client to Vercel
-        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+      - name: Build Project
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: ./client
+
+      - name: Deploy to Vercel
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: ./client
