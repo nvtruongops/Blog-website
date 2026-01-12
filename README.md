@@ -50,6 +50,9 @@
 - CSRF protection
 - Input validation (express-validator)
 - Security logging
+- Session regeneration (chống Session Fixation)
+- Generic error messages (chống User Enumeration)
+- Unique email constraint (chống duplicate registration)
 
 ## Cấu trúc dự án
 
@@ -169,7 +172,7 @@ Truy cập: http://localhost:3000
 ### Authentication
 - `POST /register` - Đăng ký
 - `POST /login` - Đăng nhập
-- `POST /logout` - Đăng xuất
+- `GET /logout` - Đăng xuất
 - `GET /auth/google` - Google OAuth
 - `POST /sendverification` - Gửi email xác thực
 - `POST /verify` - Xác thực email
@@ -196,6 +199,23 @@ Truy cập: http://localhost:3000
 cd backend
 npm test
 ```
+
+## CI/CD
+
+Dự án sử dụng GitHub Actions để tự động deploy lên Vercel khi push code lên branch `master`.
+
+### Workflow
+1. Push code → GitHub Actions trigger
+2. Backend và Client deploy song song
+3. Production URLs được cập nhật tự động
+
+### Cấu hình
+Xem chi tiết tại [docs/CICD-SETUP.md](docs/CICD-SETUP.md)
+
+## Production URLs
+
+- **Frontend:** https://client-eight-cyan-44.vercel.app
+- **Backend:** https://backend-indol-two-98.vercel.app
 
 ## License
 
