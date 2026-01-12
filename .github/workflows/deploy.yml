@@ -10,9 +10,6 @@ jobs:
   deploy-backend:
     runs-on: ubuntu-latest
     name: Deploy Backend
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_BACKEND_PROJECT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,33 +17,16 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Link Vercel Project
-        run: |
-          mkdir -p .vercel
-          cat > .vercel/project.json << EOF
-          {"projectId":"${{ secrets.VERCEL_BACKEND_PROJECT_ID }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}
-          EOF
-          cat .vercel/project.json
-        working-directory: ./backend
-
-      - name: Pull Vercel Environment
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: ./backend
-
-      - name: Build Project
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: ./backend
-
       - name: Deploy to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }}
         working-directory: ./backend
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_BACKEND_PROJECT_ID }}
 
   deploy-client:
     runs-on: ubuntu-latest
     name: Deploy Client
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_CLIENT_PROJECT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -54,23 +34,9 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Link Vercel Project
-        run: |
-          mkdir -p .vercel
-          cat > .vercel/project.json << EOF
-          {"projectId":"${{ secrets.VERCEL_CLIENT_PROJECT_ID }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}
-          EOF
-          cat .vercel/project.json
-        working-directory: ./client
-
-      - name: Pull Vercel Environment
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: ./client
-
-      - name: Build Project
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: ./client
-
       - name: Deploy to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }}
         working-directory: ./client
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_CLIENT_PROJECT_ID }}
