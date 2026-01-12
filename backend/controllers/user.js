@@ -965,6 +965,10 @@ exports.deletepost = async (req, res) => {
     return res.status(500).json({ msg: "An error occurred" });
   }
 }
+
+// Generic error message to prevent user enumeration attacks (Security Best Practice)
+const INVALID_CREDENTIALS_MSG = "Email hoặc mật khẩu không đúng. Vui lòng thử lại.";
+
 exports.login = async (req, res) => {
   try {
     const { temail, password } = req.body;
@@ -972,22 +976,33 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ email: temail });
     
     if (!user) {
-      // Log failed login attempt but don't reveal if email exists (Requirement 8.1)
+      // Log failed login attempt - don't reveal if email exists (Requirement 8.1)
       logSecurityEvent(SecurityEventType.AUTH_FAILURE, {
         ip: req.ip,
         endpoint: `${req.method} ${req.originalUrl}`,
         userAgent: req.get('User-Agent'),
         message: 'Login attempt with non-existent email'
       });
+      // Use generic message to prevent user enumeration
       return res.status(400).json({
-        message: "Email chưa được đăng ký.",
+        message: INVALID_CREDENTIALS_MSG,
       });
     }
     
     // Check if Google user has set their own password
+    // If they haven't, they need to either login with Google or set a password first
     if (user.googleId && !user.hasSetPassword) {
+      // Log but use generic message to not reveal account type
+      logSecurityEvent(SecurityEventType.AUTH_FAILURE, {
+        ip: req.ip,
+        userId: user._id.toString(),
+        endpoint: `${req.method} ${req.originalUrl}`,
+        userAgent: req.get('User-Agent'),
+        message: 'Google user attempted login without setting password'
+      });
+      // Use generic message - don't reveal this is a Google account
       return res.status(400).json({
-        message: "Tài khoản này đăng nhập bằng Google. Vui lòng đăng nhập bằng Google hoặc vào Profile để đặt mật khẩu.",
+        message: INVALID_CREDENTIALS_MSG,
       });
     }
     
@@ -1001,8 +1016,9 @@ exports.login = async (req, res) => {
         userAgent: req.get('User-Agent'),
         message: 'Invalid password attempt'
       });
+      // Use same generic message for wrong password
       return res.status(400).json({
-        message: "Mật khẩu không đúng. Vui lòng thử lại.",
+        message: INVALID_CREDENTIALS_MSG,
       });
     }
     
