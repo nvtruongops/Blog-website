@@ -138,4 +138,12 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'Blog API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 module.exports = app;
