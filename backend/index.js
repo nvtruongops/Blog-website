@@ -188,6 +188,15 @@ app.use(
 
 // Ảnh đã migrate lên Cloudinary - không cần serve static uploads nữa
 
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'Blog API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Apply general API rate limiter - Requirement 5.2
 app.use('/api', apiLimiter);
 
