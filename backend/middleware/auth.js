@@ -10,20 +10,24 @@ const keys = require("../config/keys");
  */
 const authUser = async (req, res, next) => {
   try {
+    console.log('[Auth] Checking authorization for:', req.originalUrl);
     const authHeader = req.header("Authorization");
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.log('[Auth] No valid auth header');
       return res.status(401).json({ message: "Authentication required" });
     }
 
     const token = authHeader.slice(7);
 
     if (!token) {
+      console.log('[Auth] Empty token');
       return res.status(401).json({ message: "Authentication required" });
     }
 
     jwt.verify(token, keys.TOKEN_SECRET, (err, decoded) => {
       if (err) {
+        console.log('[Auth] Token verification error:', err.name);
         if (err.name === "TokenExpiredError") {
           return res.status(401).json({ message: "Token expired" });
         }
@@ -38,13 +42,16 @@ const authUser = async (req, res, next) => {
 
       // Validate token payload has required claims
       if (!decoded.id) {
+        console.log('[Auth] Missing id in token payload');
         return res.status(401).json({ message: "Invalid token payload" });
       }
 
+      console.log('[Auth] Success, user:', decoded.id);
       req.user = decoded;
       next();
     });
   } catch (error) {
+    console.log('[Auth] Exception:', error.message);
     return res.status(500).json({ message: "Authentication error" });
   }
 };

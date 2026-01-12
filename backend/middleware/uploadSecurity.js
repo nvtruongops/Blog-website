@@ -55,15 +55,13 @@ const validateFile = (file) => {
     errors.push('File type not allowed. Allowed types: JPEG, PNG, GIF, WebP');
   }
 
-  // Check extension matches MIME type
-  if (file.name) {
+  // Check extension matches MIME type (skip if filename is 'blob' - common for pasted images)
+  if (file.name && file.name !== 'blob') {
     const ext = path.extname(file.name).toLowerCase();
     const allowedExts = ALLOWED_TYPES[file.mimetype] || [];
-    if (!allowedExts.includes(ext)) {
+    if (ext && !allowedExts.includes(ext)) {
       errors.push('File extension does not match file type');
     }
-  } else {
-    errors.push('File name is required');
   }
 
   return {
@@ -106,25 +104,51 @@ const generateSecureFilename = (originalName) => {
  * @param {Function} next - Next middleware function
  */
 const validateUpload = (req, res, next) => {
-  // Check if files exist in request
-  if (!req.files || !req.files.file) {
-    return res.status(400).json({ message: 'No file uploaded' });
-  }
-
-  const file = req.files.file;
-  const validation = validateFile(file);
-
-  if (!validation.valid) {
-    return res.status(400).json({
-      message: 'File validation failed',
-      errors: validation.errors
+  try {
+    console.log('[Upload Validation] Request received:', {
+      hasFiles: !!req.files,
+      fileKeys: req.files ? Object.keys(req.files) : [],
+      contentType: req.headers['content-type']
     });
+
+    // Check if files exist in request
+    if (!req.files || !req.files.file) {
+      console.log('[Upload Validation] No file found in request');
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const file = req.files.file;
+    
+    // Log full file object for debugging
+    console.log('[Upload Validation] File object keys:', Object.keys(file));
+    console.log('[Upload Validation] File info:', {
+      name: file.name,
+      size: file.size,
+      mimetype: file.mimetype,
+      tempFilePath: file.tempFilePath,
+      truncated: file.truncated,
+      md5: file.md5
+    });
+
+    const validation = validateFile(file);
+
+    if (!validation.valid) {
+      console.log('[Upload Validation] Validation failed:', validation.errors);
+      return res.status(400).json({
+        message: 'File validation failed',
+        errors: validation.errors
+      });
+    }
+
+    // Attach secure filename to request for later use
+    req.secureFilename = generateSecureFilename(file.name);
+    console.log('[Upload Validation] Validation passed, secure filename:', req.secureFilename);
+
+    next();
+  } catch (error) {
+    console.error('[Upload Validation] Exception:', error.message, error.stack);
+    return res.status(400).json({ message: 'File validation error', error: error.message });
   }
-
-  // Attach secure filename to request for later use
-  req.secureFilename = generateSecureFilename(file.name);
-
-  next();
 };
 
 module.exports = {

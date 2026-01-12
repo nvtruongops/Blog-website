@@ -130,6 +130,22 @@ app.use(cookieParser());
 // Apply secure session configuration - Requirements 7.1-7.5
 app.use(configureSession());
 
+// Passport v0.6+ requires session.regenerate and session.save to be functions
+// This middleware ensures compatibility with express-session
+app.use((req, res, next) => {
+  if (req.session && !req.session.regenerate) {
+    req.session.regenerate = (cb) => {
+      cb();
+    };
+  }
+  if (req.session && !req.session.save) {
+    req.session.save = (cb) => {
+      cb();
+    };
+  }
+  next();
+});
+
 app.use(passport.initialize());
 app.use(passport.session());
 

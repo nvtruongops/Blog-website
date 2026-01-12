@@ -214,7 +214,7 @@ router.post("/login/success", async (req, res) => {
     const User = require("../models/User");
     const freshUser = await User.findById(req.user._id);
     
-    const response = {
+    const responseData = {
       id: freshUser._id,
       name: freshUser.name,
       picture: freshUser.picture,
@@ -224,7 +224,29 @@ router.post("/login/success", async (req, res) => {
       email: freshUser.email,
     };
     
-    return res.status(201).send(response);
+    // Regenerate session to prevent session fixation attacks after OAuth login
+    if (req.session && req.session.regenerate) {
+      const passportData = req.session.passport;
+      req.session.regenerate((err) => {
+        if (err) {
+          console.error('Session regeneration error:', err);
+          return res.status(201).send(responseData);
+        }
+        // Restore passport session data
+        if (passportData) {
+          req.session.passport = passportData;
+        }
+        req.session.userId = req.user._id.toString();
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error('Session save error:', saveErr);
+          }
+          res.status(201).send(responseData);
+        });
+      });
+    } else {
+      return res.status(201).send(responseData);
+    }
   } else {
     return res.status(401).json({
       success: false,
@@ -233,19 +255,41 @@ router.post("/login/success", async (req, res) => {
     });
   }
 });
-//Logout
+//Logout - Requirement 7.5: Secure session termination
 router.get("/logout", async (req, res) => {
   try {
+    // First logout from passport
     req.logout((err) => {
       if (err) {
-        return res.status(400).json("Couldn't logout");
+        console.error('Passport logout error:', err);
       }
     });
-    res.cookie('session', '', { expires: new Date(0), });
-    res.clearCookie("sessionId");
+    
+    // Destroy the session completely to prevent session fixation
+    if (req.session) {
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Session destroy error:', err);
+        }
+      });
+    }
+    
+    // Clear all session-related cookies with proper options
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      path: '/'
+    };
+    
+    res.clearCookie('sessionId', cookieOptions);
+    res.clearCookie('session', cookieOptions);
+    
     res.status(200).json({ success: true });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    // Don't expose system details (Requirement 8.1)
+    return res.status(500).json({ message: "An error occurred during logout" });
   }
 });
 

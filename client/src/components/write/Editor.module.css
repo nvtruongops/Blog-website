@@ -30,7 +30,7 @@
 .form {
   background: var(--bg-card);
   border: 2px solid var(--border-color);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   padding: 2rem;
   box-shadow: var(--shadow-card);
 }
@@ -90,6 +90,74 @@
   background-repeat: no-repeat;
   background-position: right 1rem center;
   padding-right: 2.5rem;
+  border-radius: var(--radius-full);
+}
+
+/* Custom Dropdown */
+.customSelect {
+  position: relative;
+  width: 100%;
+}
+
+.selectTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1rem;
+  background: var(--bg-input);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-full);
+  font-size: 1rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.selectTrigger:hover {
+  border-color: var(--green-primary);
+}
+
+.selectTrigger.open {
+  border-color: var(--green-primary);
+  box-shadow: 0 0 0 3px var(--green-pale);
+}
+
+.selectTrigger svg {
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.selectTrigger.open svg {
+  transform: rotate(180deg);
+}
+
+.selectOptions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.selectOption {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--text-primary);
+}
+
+.selectOption:hover {
+  background: var(--green-pale);
+}
+
+.selectOption.selected {
+  background: var(--green-primary);
+  color: white;
 }
 
 .row {

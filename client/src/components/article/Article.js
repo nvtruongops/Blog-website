@@ -14,6 +14,7 @@ import {
   checklikes, decreastLike, increaseLike, bookmark, createcomment,
   getcomment, deletebookmark, checkbookmark, reportcontent, fetchprof,
   startfollow, checkfollowing, unfollow, getView, likes, deletelikes, getLikes,
+  deletepost,
 } from '@/lib/api';
 import styles from './Article.module.css';
 
@@ -220,6 +221,23 @@ export default function Article({ post, __id }) {
     toast.success('Reported');
   };
 
+  const handleEdit = () => {
+    router.push(`/edit/${__id}`);
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Bạn có chắc muốn xóa bài viết này?')) return;
+    try {
+      await deletepost(__id, user.id, user.token);
+      toast.success('Đã xóa bài viết');
+      router.push('/');
+    } catch (error) {
+      toast.error('Không thể xóa bài viết');
+    }
+  };
+
+  const isOwner = user && (user.id === postUser._id || user.id === post.user);
+
   if (!postUser) return <div>Loading...</div>;
 
   return (
@@ -256,24 +274,37 @@ export default function Article({ post, __id }) {
               <BsThreeDotsVertical
                 size={25}
                 className={styles.icon}
-                onMouseEnter={() => setShowMenu(true)}
-                onMouseLeave={() => setShowMenu(false)}
+                onClick={() => setShowMenu(!showMenu)}
               />
               {showMenu && (
-                <div className={styles.menu} onMouseEnter={() => setShowMenu(true)} onMouseLeave={() => setShowMenu(false)}>
-                  <Popup trigger={<button className={styles.reportBtn}>Report</button>} modal>
-                    <div className={styles.modal}>
-                      <h2>Report</h2>
-                      <input
-                        type="text"
-                        placeholder="Enter reason..."
-                        value={reportReason}
-                        onChange={(e) => setReportReason(e.target.value)}
-                      />
-                      <button onClick={handleReport}>Submit</button>
-                    </div>
-                  </Popup>
-                </div>
+                <>
+                  <div className={styles.menuOverlay} onClick={() => setShowMenu(false)} />
+                  <div className={styles.menu}>
+                    {isOwner ? (
+                      <>
+                        <button className={styles.editBtn} onClick={handleEdit}>
+                          Chỉnh sửa
+                        </button>
+                        <button className={styles.deleteBtn} onClick={handleDelete}>
+                          Xóa
+                        </button>
+                      </>
+                    ) : (
+                      <Popup trigger={<button className={styles.reportBtn}>Report</button>} modal>
+                        <div className={styles.modal}>
+                          <h2>Report</h2>
+                          <input
+                            type="text"
+                            placeholder="Enter reason..."
+                            value={reportReason}
+                            onChange={(e) => setReportReason(e.target.value)}
+                          />
+                          <button onClick={handleReport}>Submit</button>
+                        </div>
+                      </Popup>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           </div>

@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import Cookies from 'js-cookie';
-import { BeatLoader, PuffLoader } from 'react-spinners';
-import InfiniteScroll from 'react-infinite-scroll-component';
+import { BeatLoader } from 'react-spinners';
 import Navbar from '../Navbar';
 import Footer from '../Footer';
 import PostCard from '../home/PostCard';
@@ -26,6 +25,7 @@ export default function UserProfile() {
 
   const [image, setImage] = useState('');
   const [about, setAbout] = useState('');
+  const [editingAbout, setEditingAbout] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [dbPic, setDbPic] = useState('');
@@ -41,6 +41,7 @@ export default function UserProfile() {
   const [showLiked, setShowLiked] = useState(false);
   const [showPosts, setShowPosts] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
+  const [loadingSection, setLoadingSection] = useState('');
   
   // Password states
   const [hasPassword, setHasPassword] = useState(true);
@@ -50,8 +51,6 @@ export default function UserProfile() {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
-  
-  // Change password states (for users who already have password)
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
   const [changeNewPassword, setChangeNewPassword] = useState('');
@@ -65,18 +64,15 @@ export default function UserProfile() {
       try {
         const profile = await getUser(user.id);
         if (profile?._doc) {
-          setDbPic(profile._doc.picture || '');
+          setDbPic(profile._doc.picture || user?.picture || '');
           setDbAbout(profile._doc.about || '');
           setAbout(profile._doc.about || '');
           setDbEmail(profile._doc.email || '');
         }
-
         const followerData = await getfollowercount(user.id);
         const followingData = await getfollowingcount(user.id);
         setFollowerCount(followerData?.data?.msg || 0);
         setFollowingCount(followingData?.data?.msg || 0);
-        
-        // Check if user needs to set password
         const passwordCheck = await checkHasPassword(user.id);
         setHasPassword(passwordCheck.hasPassword);
         setIsGoogleUser(passwordCheck.isGoogleUser);
@@ -94,7 +90,6 @@ export default function UserProfile() {
       reader.readAsDataURL(file);
       reader.onload = (event) => {
         setImage(event.target.result);
-        setDbPic('');
         setError('');
       };
     }
@@ -102,136 +97,90 @@ export default function UserProfile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!image && !about) return;
-
-    if (!image) {
-      await changeabout(about, user.id);
-      window.location.reload();
-      return;
-    }
-
-    if (about.length > 120) {
-      setError('Maximum 120 characters allowed');
-      return;
-    }
-
+    if (!image && !editingAbout) return;
+    if (about.length > 120) { setError('Tối đa 120 ký tự'); return; }
     setLoading(true);
     try {
-      const path = `${user.name}/profile_image`;
-      const img = dataURItoBlob(image);
-      const formData = new FormData();
-      formData.append('path', path);
-      formData.append('file', img);
-
-      const profileImg = await uploadImages(formData, user.token);
-      const data = await uploadProfilePicture(profileImg[0].url, about, user.token);
-
-      Cookies.set('user', JSON.stringify({ ...user, picture: profileImg[0].url, about: data.about }));
-      dispatch(updatePicture(data));
+      if (image) {
+        const path = `${user.name}/profile_image`;
+        const img = dataURItoBlob(image);
+        const formData = new FormData();
+        formData.append('path', path);
+        formData.append('file', img);
+        const profileImg = await uploadImages(formData, user.token);
+        const data = await uploadProfilePicture(profileImg[0].url, about, user.token);
+        Cookies.set('user', JSON.stringify({ ...user, picture: profileImg[0].url, about: data.about }));
+        dispatch(updatePicture(data));
+      } else {
+        await changeabout(about, user.id);
+      }
       window.location.reload();
     } catch (error) {
       setLoading(false);
-      setError(error.response?.data?.message || 'Error updating profile');
+      setError(error.response?.data?.message || 'Có lỗi xảy ra');
     }
   };
 
   const handleSetPassword = async (e) => {
     e.preventDefault();
-    setPasswordError('');
-    setPasswordSuccess('');
-    
-    if (newPassword.length < 6) {
-      setPasswordError('Mật khẩu phải có ít nhất 6 ký tự');
-      return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      setPasswordError('Mật khẩu xác nhận không khớp');
-      return;
-    }
-    
+    setPasswordError(''); setPasswordSuccess('');
+    if (newPassword.length < 6) { setPasswordError('Mật khẩu phải có ít nhất 6 ký tự'); return; }
+    if (newPassword !== confirmPassword) { setPasswordError('Mật khẩu không khớp'); return; }
     setPasswordLoading(true);
     try {
       const result = await setPassword(user.id, newPassword, user.token);
-      if (result.success) {
-        setPasswordSuccess('Đặt mật khẩu thành công! Bạn có thể đăng nhập bằng email/password.');
-        setHasPassword(true);
-        setNewPassword('');
-        setConfirmPassword('');
-      } else {
-        setPasswordError(result.error || 'Có lỗi xảy ra');
-      }
-    } catch (error) {
-      setPasswordError('Có lỗi xảy ra, vui lòng thử lại');
-    }
+      if (result.success) { setPasswordSuccess('Thành công!'); setHasPassword(true); setNewPassword(''); setConfirmPassword(''); }
+      else { setPasswordError(result.error || 'Có lỗi'); }
+    } catch { setPasswordError('Có lỗi xảy ra'); }
     setPasswordLoading(false);
   };
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    setChangePasswordError('');
-    setChangePasswordSuccess('');
-    
-    if (!oldPassword) {
-      setChangePasswordError('Vui lòng nhập mật khẩu hiện tại');
-      return;
-    }
-    
-    if (changeNewPassword.length < 6) {
-      setChangePasswordError('Mật khẩu mới phải có ít nhất 6 ký tự');
-      return;
-    }
-    
-    if (changeNewPassword !== changeConfirmPassword) {
-      setChangePasswordError('Mật khẩu xác nhận không khớp');
-      return;
-    }
-    
+    setChangePasswordError(''); setChangePasswordSuccess('');
+    if (!oldPassword) { setChangePasswordError('Nhập mật khẩu hiện tại'); return; }
+    if (changeNewPassword.length < 6) { setChangePasswordError('Mật khẩu mới ít nhất 6 ký tự'); return; }
+    if (changeNewPassword !== changeConfirmPassword) { setChangePasswordError('Mật khẩu không khớp'); return; }
     setChangePasswordLoading(true);
     try {
       const result = await changeUserPassword(user.id, oldPassword, changeNewPassword, user.token);
-      if (result.success) {
-        setChangePasswordSuccess('Đổi mật khẩu thành công!');
-        setOldPassword('');
-        setChangeNewPassword('');
-        setChangeConfirmPassword('');
-        setTimeout(() => setShowChangePassword(false), 2000);
-      } else {
-        setChangePasswordError(result.error || 'Có lỗi xảy ra');
-      }
-    } catch (error) {
-      setChangePasswordError('Có lỗi xảy ra, vui lòng thử lại');
-    }
+      if (result.success) { setChangePasswordSuccess('Thành công!'); setOldPassword(''); setChangeNewPassword(''); setChangeConfirmPassword(''); }
+      else { setChangePasswordError(result.error || 'Có lỗi'); }
+    } catch { setChangePasswordError('Có lỗi xảy ra'); }
     setChangePasswordLoading(false);
   };
 
-  const handleLoadBookmarks = async () => {
-    const data = await showbookmarks(user.id);
-    setBookmarks(data.data.msg || []);
-    setShowBookmarks(true);
+  const handleToggle = async (section) => {
+    if (section === 'liked') {
+      if (showLiked) { setShowLiked(false); return; }
+      setLoadingSection('liked');
+      const data = await showLikemarks(user.id);
+      setLikedPosts(data.data.msg || []);
+      setShowLiked(true);
+    } else if (section === 'bookmarks') {
+      if (showBookmarks) { setShowBookmarks(false); return; }
+      setLoadingSection('bookmarks');
+      const data = await showbookmarks(user.id);
+      setBookmarks(data.data.msg || []);
+      setShowBookmarks(true);
+    } else if (section === 'posts') {
+      if (showPosts) { setShowPosts(false); return; }
+      setLoadingSection('posts');
+      const data = await showmyposts(user.id);
+      setPosts(data.msg || []);
+      setShowPosts(true);
+    } else if (section === 'following') {
+      if (showFollowing) { setShowFollowing(false); return; }
+      setLoadingSection('following');
+      const data = await fetchfollowing(user.id);
+      setFollowing(data.msg || []);
+      setShowFollowing(true);
+    }
+    setLoadingSection('');
   };
 
-  const handleLoadLiked = async () => {
-    const data = await showLikemarks(user.id);
-    setLikedPosts(data.data.msg || []);
-    setShowLiked(true);
-  };
-
-  const handleLoadPosts = async () => {
-    const data = await showmyposts(user.id);
-    setPosts(data.msg || []);
-    setShowPosts(true);
-  };
-
-  const handleDeletePost = (postId) => {
-    setPosts((prev) => prev.filter((p) => p._id !== postId));
-  };
-
-  const handleLoadFollowing = async () => {
-    const data = await fetchfollowing(user.id);
-    setFollowing(data.msg || []);
-    setShowFollowing(!showFollowing);
-  };
+  const handleDeletePost = (postId) => setPosts((prev) => prev.filter((p) => p._id !== postId));
+  const currentPic = image || dbPic || user?.picture || '/default-avatar.svg';
 
   return (
     <div className={styles.container}>
@@ -239,203 +188,99 @@ export default function UserProfile() {
       <div className={styles.profile}>
         <div className={styles.photoSection}>
           <div className={styles.preview}>
-            <img src={dbPic || image || '/default-avatar.svg'} alt="Profile" referrerPolicy="no-referrer" />
+            <img src={currentPic} alt="Profile" referrerPolicy="no-referrer" onError={(e) => { e.target.src = '/default-avatar.svg'; }} />
           </div>
-          <button onClick={() => { imgRef.current.click(); setDbPic(''); }}>
-            Change or Add an Image
-          </button>
+          <button onClick={() => imgRef.current.click()}>Thay đổi ảnh</button>
         </div>
-
-        {/* User Info Section */}
         <div className={styles.userInfo}>
-          {dbEmail && (
-            <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Email:</span>
-              <span className={styles.infoValue}>{dbEmail}</span>
-            </div>
-          )}
+          <div className={styles.userName}>{user?.name || 'User'}</div>
+          {dbEmail && <div className={styles.userEmail}>{dbEmail}</div>}
         </div>
-
         <form onSubmit={handleSubmit}>
           <input ref={imgRef} type="file" accept="image/*" onChange={handlePhotoChange} hidden />
-          <label>About Me:</label>
-          {dbAbout ? (
-            <div className={styles.aboutDisplay}>{dbAbout}</div>
-          ) : (
-            <textarea
-              rows="5"
-              value={about}
-              placeholder="Write something..."
-              onChange={(e) => { setAbout(e.target.value); setDbAbout(''); }}
-            />
-          )}
-          {error && <span className={styles.error}>{error}</span>}
-          <div className={styles.changeBio} onClick={() => { setDbAbout(''); setAbout(dbAbout); }}>
-            Change Bio
+          <div className={styles.aboutSection}>
+            <label>Giới thiệu</label>
+            {!editingAbout && dbAbout ? (
+              <div className={styles.aboutDisplay}>{dbAbout}<span className={styles.editLink} onClick={() => setEditingAbout(true)}>Sửa</span></div>
+            ) : (
+              <textarea rows="2" value={about} placeholder="Viết vài dòng về bản thân..." onChange={(e) => setAbout(e.target.value)} maxLength={120} />
+            )}
           </div>
-          <button type="submit" disabled={loading}>
-            {loading ? <BeatLoader size={10} /> : 'Save'}
-          </button>
+          {error && <span className={styles.error}>{error}</span>}
+          {(image || editingAbout) && <button type="submit" disabled={loading}>{loading ? <BeatLoader size={8} color="#fff" /> : 'Lưu'}</button>}
         </form>
       </div>
 
-      {/* Password Section for Google Users who haven't set password */}
       {isGoogleUser && !hasPassword && (
         <div className={styles.passwordSection}>
           <h3>Đặt mật khẩu</h3>
-          <p className={styles.passwordNote}>
-            Bạn đăng nhập bằng Google. Đặt mật khẩu để có thể đăng nhập bằng email/password.
-          </p>
           <form onSubmit={handleSetPassword}>
-            <div className={styles.inputGroup}>
-              <label>Mật khẩu mới:</label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Nhập mật khẩu (ít nhất 6 ký tự)"
-              />
-            </div>
-            <div className={styles.inputGroup}>
-              <label>Xác nhận mật khẩu:</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Nhập lại mật khẩu"
-              />
-            </div>
+            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Mật khẩu mới" />
+            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Xác nhận" />
             {passwordError && <span className={styles.error}>{passwordError}</span>}
             {passwordSuccess && <span className={styles.success}>{passwordSuccess}</span>}
-            <button type="submit" disabled={passwordLoading}>
-              {passwordLoading ? <BeatLoader size={10} /> : 'Đặt mật khẩu'}
-            </button>
+            <button type="submit" disabled={passwordLoading}>{passwordLoading ? <BeatLoader size={8} color="#fff" /> : 'Đặt mật khẩu'}</button>
           </form>
         </div>
       )}
 
-      {/* Change Password Section for all users who have password */}
       {hasPassword && (
         <div className={styles.changePasswordSection}>
-          <div 
-            className={styles.changePasswordToggle}
-            onClick={() => {
-              setShowChangePassword(!showChangePassword);
-              setChangePasswordError('');
-              setChangePasswordSuccess('');
-            }}
-          >
-            <span>Đổi mật khẩu</span>
-            <span className={styles.toggleIcon}>{showChangePassword ? '▲' : '▼'}</span>
+          <div className={styles.sectionHeader} onClick={() => setShowChangePassword(!showChangePassword)}>
+            <span>Đổi mật khẩu</span><span>{showChangePassword ? '▲' : '▼'}</span>
           </div>
-          
           {showChangePassword && (
             <form onSubmit={handleChangePassword} className={styles.changePasswordForm}>
-              <div className={styles.inputGroup}>
-                <label>Mật khẩu hiện tại:</label>
-                <input
-                  type="password"
-                  value={oldPassword}
-                  onChange={(e) => setOldPassword(e.target.value)}
-                  placeholder="Nhập mật khẩu hiện tại"
-                />
-              </div>
-              <div className={styles.inputGroup}>
-                <label>Mật khẩu mới:</label>
-                <input
-                  type="password"
-                  value={changeNewPassword}
-                  onChange={(e) => setChangeNewPassword(e.target.value)}
-                  placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)"
-                />
-              </div>
-              <div className={styles.inputGroup}>
-                <label>Xác nhận mật khẩu mới:</label>
-                <input
-                  type="password"
-                  value={changeConfirmPassword}
-                  onChange={(e) => setChangeConfirmPassword(e.target.value)}
-                  placeholder="Nhập lại mật khẩu mới"
-                />
-              </div>
+              <input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} placeholder="Mật khẩu hiện tại" />
+              <input type="password" value={changeNewPassword} onChange={(e) => setChangeNewPassword(e.target.value)} placeholder="Mật khẩu mới" />
+              <input type="password" value={changeConfirmPassword} onChange={(e) => setChangeConfirmPassword(e.target.value)} placeholder="Xác nhận" />
               {changePasswordError && <span className={styles.error}>{changePasswordError}</span>}
               {changePasswordSuccess && <span className={styles.success}>{changePasswordSuccess}</span>}
-              <button type="submit" disabled={changePasswordLoading}>
-                {changePasswordLoading ? <BeatLoader size={10} /> : 'Đổi mật khẩu'}
-              </button>
+              <button type="submit" disabled={changePasswordLoading}>{changePasswordLoading ? <BeatLoader size={8} color="#fff" /> : 'Đổi'}</button>
             </form>
           )}
         </div>
       )}
 
       <div className={styles.stats}>
-        <div>Following: {followingCount}</div>
-        <div>Followers: {followerCount}</div>
+        <div className={styles.statItem}><span className={styles.statNumber}>{followingCount}</span><span className={styles.statLabel}>Theo dõi</span></div>
+        <div className={styles.statItem}><span className={styles.statNumber}>{followerCount}</span><span className={styles.statLabel}>Người theo dõi</span></div>
       </div>
 
       <div className={styles.sections}>
-        <Section title="Liked Posts" onClick={handleLoadLiked} show={showLiked} items={likedPosts} />
-        <Section title="Bookmarks" onClick={handleLoadBookmarks} show={showBookmarks} items={bookmarks} />
-        <Section 
-          title="Your Posts" 
-          onClick={handleLoadPosts} 
-          show={showPosts} 
-          items={posts} 
-          type="powner" 
-          onDelete={handleDeletePost}
-        />
+        <div className={styles.section}>
+          <div className={styles.sectionHeader} onClick={() => handleToggle('liked')}>
+            <span>Bài viết đã thích {showLiked && likedPosts.length > 0 && `(${likedPosts.length})`}</span>
+            <span>{loadingSection === 'liked' ? <BeatLoader size={6} color="#2d8a4e" /> : (showLiked ? '▲' : '▼')}</span>
+          </div>
+          {showLiked && (likedPosts.length === 0 ? <p className={styles.emptyText}>Chưa có</p> : <div className={styles.postsGrid}>{likedPosts.map((p, i) => <PostCard post={p} key={p._id || i} compact />)}</div>)}
+        </div>
 
         <div className={styles.section}>
-          <h2 onClick={handleLoadFollowing}>People You Follow:</h2>
-          {showFollowing && (
-            following.length === 0 ? (
-              <p>You are not following anyone</p>
-            ) : (
-              <div className={styles.followingList}>
-                {following.map((f, i) => (
-                  <div 
-                    key={i} 
-                    className={styles.followItem}
-                    onClick={() => router.push(`/profile/${f.pid}`)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <img src={f.pic} alt={f.name} />
-                    <span>{f.name}</span>
-                  </div>
-                ))}
-              </div>
-            )
-          )}
+          <div className={styles.sectionHeader} onClick={() => handleToggle('bookmarks')}>
+            <span>Đã lưu {showBookmarks && bookmarks.length > 0 && `(${bookmarks.length})`}</span>
+            <span>{loadingSection === 'bookmarks' ? <BeatLoader size={6} color="#2d8a4e" /> : (showBookmarks ? '▲' : '▼')}</span>
+          </div>
+          {showBookmarks && (bookmarks.length === 0 ? <p className={styles.emptyText}>Chưa có</p> : <div className={styles.postsGrid}>{bookmarks.map((p, i) => <PostCard post={p} key={p._id || i} compact />)}</div>)}
+        </div>
+
+        <div className={styles.section}>
+          <div className={styles.sectionHeader} onClick={() => handleToggle('posts')}>
+            <span>Bài viết của bạn {showPosts && posts.length > 0 && `(${posts.length})`}</span>
+            <span>{loadingSection === 'posts' ? <BeatLoader size={6} color="#2d8a4e" /> : (showPosts ? '▲' : '▼')}</span>
+          </div>
+          {showPosts && (posts.length === 0 ? <p className={styles.emptyText}>Chưa có</p> : <div className={styles.postsGrid}>{posts.map((p, i) => <PostCard post={p} key={p._id || i} type="powner" onDelete={handleDeletePost} compact />)}</div>)}
+        </div>
+
+        <div className={styles.section}>
+          <div className={styles.sectionHeader} onClick={() => handleToggle('following')}>
+            <span>Đang theo dõi {showFollowing && following.length > 0 && `(${following.length})`}</span>
+            <span>{loadingSection === 'following' ? <BeatLoader size={6} color="#2d8a4e" /> : (showFollowing ? '▲' : '▼')}</span>
+          </div>
+          {showFollowing && (following.length === 0 ? <p className={styles.emptyText}>Chưa theo dõi ai</p> : <div className={styles.followingList}>{following.map((f, i) => <div key={i} className={styles.followItem} onClick={() => router.push(`/profile/${f.pid}`)}><img src={f.pic || '/default-avatar.svg'} alt={f.name} onError={(e) => { e.target.src = '/default-avatar.svg'; }} /><span>{f.name}</span></div>)}</div>)}
         </div>
       </div>
-
       <Footer />
-    </div>
-  );
-}
-
-function Section({ title, onClick, show, items, type, onDelete }) {
-  return (
-    <div className={styles.section}>
-      <h2 onClick={onClick}>{title}:</h2>
-      {show ? (
-        items.length === 0 ? (
-          <p>No {title.toLowerCase()}</p>
-        ) : (
-          <div className={styles.postsGrid}>
-            {items.map((post, i) => (
-              <PostCard 
-                post={post} 
-                key={post._id || i} 
-                type={type} 
-                onDelete={onDelete}
-              />
-            ))}
-          </div>
-        )
-      ) : (
-        <p>Click above to show {title.toLowerCase()}</p>
-      )}
     </div>
   );
 }

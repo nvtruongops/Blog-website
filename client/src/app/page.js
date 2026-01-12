@@ -44,7 +44,7 @@ export default function HomePage() {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
       />
-      <div style={{ marginTop: '70px' }}>
+      <div style={{ marginTop: '100px' }}>
         <Breaker text="Featured Post" />
         <Posts 
           category={category} 

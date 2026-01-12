@@ -8,17 +8,16 @@ import { BeatLoader } from 'react-spinners';
 import { deletepost } from '@/lib/api';
 import styles from './PostCard.module.css';
 
-export default function PostCard({ post, type, onDelete }) {
+export default function PostCard({ post, type, onDelete, compact }) {
   const router = useRouter();
   const user = useSelector((state) => state.user);
   const [deleting, setDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const date = new Date(post.createdAt);
-  const options = { month: 'long', day: 'numeric', year: 'numeric' };
-  const formattedDate = date.toLocaleDateString('en-US', options);
+  const options = { month: 'short', day: 'numeric', year: 'numeric' };
+  const formattedDate = date.toLocaleDateString('vi-VN', options);
 
-  // Check if current user owns this post
   const isOwner = user && (post.user?._id === user.id || post.user === user.id);
 
   const handleClick = () => {
@@ -49,34 +48,40 @@ export default function PostCard({ post, type, onDelete }) {
   };
 
   return (
-    <div className={styles.card} onClick={handleClick}>
+    <div className={`${styles.card} ${compact ? styles.compact : ''}`} onClick={handleClick}>
       <div className={styles.imageWrapper}>
         <img src={post.image} alt={post.title} className={styles.image} />
         <span className={styles.category}>{post.category}</span>
       </div>
       <div className={styles.content}>
         <h3 className={styles.title}>{post.title}</h3>
-        <p className={styles.description}>
-          {post.description?.length > 100
-            ? post.description.substring(0, 100) + '...'
-            : post.description}
-        </p>
+        {!compact && (
+          <p className={styles.description}>
+            {post.description?.length > 80
+              ? post.description.substring(0, 80) + '...'
+              : post.description}
+          </p>
+        )}
         <div className={styles.meta}>
-          <div className={styles.author}>
-            <img
-              src={post.user?.picture || '/default-avatar.svg'}
-              alt={post.user?.name}
-              className={styles.avatar}
-              referrerPolicy="no-referrer"
-            />
-            <span>{post.user?.name || 'Anonymous'}</span>
-          </div>
+          {!compact && (
+            <div className={styles.author}>
+              <img
+                src={post.user?.picture || '/default-avatar.svg'}
+                alt={post.user?.name}
+                className={styles.avatar}
+                referrerPolicy="no-referrer"
+              />
+              <span>{post.user?.name || 'Anonymous'}</span>
+            </div>
+          )}
           <span className={styles.date}>{formattedDate}</span>
         </div>
-        <div className={styles.stats}>
-          <span>{post.views || 0} views</span>
-          <span>{post.likes || 0} likes</span>
-        </div>
+        {!compact && (
+          <div className={styles.stats}>
+            <span>{post.views || 0} views</span>
+            <span>{post.likes || 0} likes</span>
+          </div>
+        )}
         
         {/* Action buttons for post owner */}
         {(type === 'powner' || isOwner) && (

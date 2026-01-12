@@ -68,7 +68,8 @@ app.use((err, req, res, next) => {
 app.use(configureHelmet());
 app.use(requestLogger);
 app.use(mongoSanitize());
-app.use(xss());
+// Note: xss() disabled for file uploads - it can corrupt binary data
+// app.use(xss());
 app.use(hpp());
 
 // MongoDB connection with caching for serverless
@@ -89,12 +90,12 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: '100kb' }));
-app.use(express.urlencoded({ limit: '100kb', extended: true, parameterLimit: 1000 }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true, parameterLimit: 1000 }));
 
 app.use((err, req, res, next) => {
   if (err.type === 'entity.too.large') {
-    return res.status(413).json({ message: 'Request body too large. Maximum size is 100KB.' });
+    return res.status(413).json({ message: 'Request body too large. Maximum size is 10MB.' });
   }
   next(err);
 });
@@ -105,7 +106,25 @@ app.use(configureSession());
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(fileUpload({ useTempFiles: true }));
+app.use(fileUpload({ 
+  useTempFiles: true,
+  tempFileDir: '/tmp/',  // Required for Vercel serverless
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  abortOnLimit: true,
+  debug: true // Enable debug logging
+}));
+
+// Debug middleware for upload route
+app.use('/uploadImages', (req, res, next) => {
+  console.log('[Upload Debug] Before route:', {
+    method: req.method,
+    hasFiles: !!req.files,
+    hasBody: !!req.body,
+    contentLength: req.headers['content-length'],
+    contentType: req.headers['content-type']
+  });
+  next();
+});
 
 app.use('/api', apiLimiter);
 app.use("/", userRoutes);

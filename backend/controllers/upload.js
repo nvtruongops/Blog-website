@@ -10,6 +10,13 @@ cloudinary.config({
   api_secret: keys.CLOUDINARY_API_SECRET,
 });
 
+// Debug: Log Cloudinary config on startup (masked)
+console.log('[Cloudinary Config]', {
+  cloud_name: keys.CLOUDINARY_NAME || 'MISSING',
+  api_key: keys.CLOUDINARY_API_KEY ? '***' + keys.CLOUDINARY_API_KEY.slice(-4) : 'MISSING',
+  api_secret: keys.CLOUDINARY_API_SECRET ? '***' + keys.CLOUDINARY_API_SECRET.slice(-4) : 'MISSING'
+});
+
 /**
  * Upload images with security validation
  * Validates file, generates secure filename, and uploads to Cloudinary
@@ -49,6 +56,12 @@ exports.uploadImages = async (req, res) => {
  */
 const uploadToCloudinary = async (file, uploadPath, secureFilename) => {
   return new Promise((resolve, reject) => {
+    console.log('[Cloudinary Upload] Starting upload:', {
+      folder: uploadPath || "blog",
+      public_id: secureFilename.replace(/\.[^/.]+$/, ""),
+      tempFilePath: file.tempFilePath ? 'exists' : 'missing'
+    });
+    
     cloudinary.uploader.upload(
       file.tempFilePath,
       {
@@ -58,8 +71,10 @@ const uploadToCloudinary = async (file, uploadPath, secureFilename) => {
       },
       (error, result) => {
         if (error) {
+          console.error('[Cloudinary Upload] Error:', error);
           reject(error);
         } else {
+          console.log('[Cloudinary Upload] Success:', result.secure_url);
           resolve({ url: result.secure_url });
         }
       }

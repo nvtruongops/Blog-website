@@ -1016,7 +1016,7 @@ exports.login = async (req, res) => {
     });
     
     const token = generateToken({ id: user._id.toString() }, "15d");
-    res.send({
+    const responseData = {
       id: user._id,
       name: user.name,
       picture: user.picture,
@@ -1024,7 +1024,30 @@ exports.login = async (req, res) => {
       bookmark: user.bookmarks,
       likes: user.likes,
       email: user.email,
-    });
+    };
+    
+    // Regenerate session to prevent session fixation attacks (Security Best Practice)
+    // This creates a new session ID while preserving session data
+    if (req.session && req.session.regenerate) {
+      req.session.regenerate((err) => {
+        if (err) {
+          console.error('Session regeneration error:', err);
+          // Still send response even if regeneration fails
+          return res.send(responseData);
+        }
+        // Set user ID in new session
+        req.session.userId = user._id.toString();
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error('Session save error:', saveErr);
+          }
+          res.send(responseData);
+        });
+      });
+    } else {
+      // Fallback if session not available
+      res.send(responseData);
+    }
   } catch (error) {
     // Don't expose system details (Requirement 8.1)
     res.status(500).json({ message: "An error occurred during login" });

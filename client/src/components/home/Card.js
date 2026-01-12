@@ -16,10 +16,7 @@ export default function Card() {
           Discover Amazing <span>Stories</span>
         </h1>
         <p>
-          Explore curated blogs from passionate writers. Share your thoughts and connect with the community.
-        </p>
-        <p className={styles.hint}>
-          Click the <strong>☰</strong> menu to filter and search posts
+          Khám phá những bài viết chất lượng từ cộng đồng. Chia sẻ câu chuyện của bạn ngay hôm nay.
         </p>
       </div>
     </div>

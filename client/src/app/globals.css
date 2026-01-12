@@ -166,6 +166,61 @@ input::placeholder, textarea::placeholder {
   margin: 0.25em 0;
 }
 
+/* Jodit Editor Professional Styling */
+.jodit-container {
+  border: 2px solid var(--border-color) !important;
+  border-radius: var(--radius-md) !important;
+  overflow: hidden;
+  font-family: inherit !important;
+}
+
+.jodit-toolbar {
+  background: var(--bg-secondary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  padding: 0.5rem !important;
+}
+
+.jodit-toolbar-button {
+  border-radius: var(--radius-sm) !important;
+  margin: 0 2px !important;
+  transition: var(--transition) !important;
+  border: none !important;
+}
+
+.jodit-toolbar-button:hover {
+  background: var(--green-pale) !important;
+}
+
+.jodit-toolbar-button.jodit-toolbar-button_active {
+  background: var(--green-primary) !important;
+  color: white !important;
+}
+
+.jodit-wysiwyg {
+  padding: 1.5rem !important;
+  font-family: inherit !important;
+  line-height: 1.6 !important;
+  color: var(--text-primary) !important;
+  background: var(--bg-input) !important;
+}
+
+.jodit-status-bar {
+  display: none !important;
+}
+
+/* Hide unnecessary Jodit elements */
+.jodit-toolbar__box .jodit-separator {
+  background: var(--border-color) !important;
+  margin: 0 4px !important;
+}
+
+.jodit-popup {
+  border: 2px solid var(--border-color) !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--bg-card) !important;
+  box-shadow: var(--shadow) !important;
+}
+
 /* Utility Classes */
 .container {
   max-width: 1200px;

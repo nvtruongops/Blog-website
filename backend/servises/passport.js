@@ -4,6 +4,16 @@ const bcrypt = require("bcrypt");
 const keys = require("../config/keys")
 const User = require('../models/User');
 
+// Debug: Log OAuth config on startup
+const callbackURL = keys.BACKEND_URL 
+  ? `${keys.BACKEND_URL.trim()}/auth/google/callback` 
+  : "/auth/google/callback";
+console.log('[OAuth Config]', {
+  clientID: keys.GOOGLE_CLIENT_ID ? '***' + keys.GOOGLE_CLIENT_ID.slice(-10) : 'MISSING',
+  callbackURL: callbackURL,
+  backendURL: keys.BACKEND_URL || 'NOT SET'
+});
+
 // Generate random password
 const generateRandomPassword = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
@@ -17,7 +27,7 @@ const generateRandomPassword = () => {
 passport.use(new GoogleStrategy({
   clientID: keys.GOOGLE_CLIENT_ID,
   clientSecret: keys.GOOGLE_CLIENT_SECRET,
-  callbackURL: "/auth/google/callback",
+  callbackURL: callbackURL,
   scope: ["profile", "email"]
 },
   async (accessToken, refreshToken, profile, done) => {

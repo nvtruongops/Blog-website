@@ -30,7 +30,7 @@ const configureSession = () => {
     console.error('Session store error:', error);
   });
 
-  const isProduction = process.env.NODE_ENV === 'production';
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
 
   return session({
     store,
@@ -39,13 +39,13 @@ const configureSession = () => {
     resave: false,
     saveUninitialized: false,
     rolling: true, // Reset expiration on each request
-    proxy: isProduction, // Trust first proxy in production
+    proxy: true, // Always trust proxy on Vercel
     cookie: {
       maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days (Requirement 7.4)
       httpOnly: true, // Prevent JavaScript access (Requirement 7.1)
       secure: isProduction, // HTTPS only in production (Requirement 7.2)
       sameSite: isProduction ? 'none' : 'lax', // CSRF protection (Requirement 7.3)
-      domain: isProduction ? process.env.COOKIE_DOMAIN : undefined
+      // Don't set domain for cross-origin cookies
     }
   });
 };
@@ -57,14 +57,13 @@ const configureSession = () => {
  * Requirement 7.5: Clear all session cookies with proper domain and path settings
  */
 const clearSessionCookies = (res) => {
-  const isProduction = process.env.NODE_ENV === 'production';
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
   
   res.clearCookie('sessionId', {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? 'none' : 'lax',
-    path: '/',
-    domain: isProduction ? process.env.COOKIE_DOMAIN : undefined
+    path: '/'
   });
 };
 

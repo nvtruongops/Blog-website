@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import Cookies from 'js-cookie';
 import axios from 'axios';
-import { BsSearch, BsPencilSquare, BsList, BsX } from 'react-icons/bs';
+import { BsSearch, BsPencilSquare, BsX } from 'react-icons/bs';
 import { logout } from '@/store/slices/userSlice';
-import { clearCookie, searchresult } from '@/lib/api';
+import { clearCookie } from '@/lib/api';
 import styles from './Navbar.module.css';
 
 const categories = ['all', 'food', 'travelling', 'lifestyle', 'tech'];
@@ -28,32 +28,19 @@ export default function Navbar({
   const dispatch = useDispatch();
   const router = useRouter();
   const user = useSelector((state) => state.user);
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchContent, setSearchContent] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [localSearch, setLocalSearch] = useState(searchQuery || '');
 
   const navigateToHome = () => router.push('/');
-
-  const onSearchChange = async () => {
-    if (searchContent === '') return;
-    const data = await searchresult(searchContent);
-    if (data.msg) setSearchResults(data.msg);
-  };
 
   const handlePostSearch = () => {
     if (setSearchQuery) {
       setSearchQuery(localSearch);
     }
-    setMenuOpen(false);
   };
 
-  const handleCategoryClick = (cat) => {
-    if (setCategory) {
-      setCategory(cat);
-    }
-    setMenuOpen(false);
+  const handleClearSearch = () => {
+    setLocalSearch('');
+    if (setSearchQuery) setSearchQuery('');
   };
 
   const logoutFunction = async (e) => {
@@ -71,176 +58,130 @@ export default function Navbar({
   };
 
   return (
-    <nav className={styles.navbar}>
-      {showSearch && <div className={styles.overlay} onClick={() => setShowSearch(false)} />}
-      {menuOpen && <div className={styles.overlay} onClick={() => setMenuOpen(false)} />}
-
-      <div className={styles.leftSection}>
-        {/* Hamburger Menu - only show on homepage with filters */}
-        {showFilters && (
-          <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)}>
-            {menuOpen ? <BsX size={24} /> : <BsList size={24} />}
-          </button>
-        )}
-
-        <div className={styles.logo} onClick={navigateToHome}>
-          <img src="/logo.png" alt="HOME" />
-          <span>All Blogs</span>
-        </div>
-      </div>
-
-      {/* Filter Menu Dropdown */}
-      {showFilters && menuOpen && (
-        <div className={styles.filterMenu}>
-          <div className={styles.filterSection}>
-            <h4>Search Posts</h4>
-            <div className={styles.filterSearchBox}>
-              <input
-                type="text"
-                placeholder="Search blogs..."
-                value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handlePostSearch()}
-              />
-              {localSearch && (
-                <button 
-                  className={styles.clearFilterSearch}
-                  onClick={() => { setLocalSearch(''); if (setSearchQuery) setSearchQuery(''); }}
-                  type="button"
-                >
-                  <BsX size={18} />
-                </button>
-              )}
-              <button onClick={handlePostSearch}>
-                <BsSearch />
-              </button>
-            </div>
+    <>
+      <nav className={styles.navbar}>
+        <div className={styles.leftSection}>
+          <div className={styles.logo} onClick={navigateToHome}>
+            <img src="/logo.png" alt="HOME" />
+            <span>All Blogs</span>
           </div>
+        </div>
 
-          <div className={styles.filterSection}>
-            <h4>Categories</h4>
-            <div className={styles.categoryList}>
+        {/* Search bar */}
+        <div className={styles.search}>
+          <div className={styles.searchWrap}>
+            <div className={styles.searchIcon}>
+              <BsSearch size={16} />
+            </div>
+            <input
+              className={styles.input}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handlePostSearch()}
+              type="text"
+              value={localSearch}
+              placeholder="Tìm kiếm bài viết..."
+            />
+            {localSearch && (
+              <button 
+                className={styles.clearSearch} 
+                onClick={handleClearSearch}
+                type="button"
+              >
+                <BsX size={18} />
+              </button>
+            )}
+          </div>
+          {showFilters && (
+            <button className={styles.searchButton} onClick={handlePostSearch}>
+              Tìm
+            </button>
+          )}
+        </div>
+
+        {user ? (
+          <div className={styles.links}>
+            <Link
+              className={styles.write}
+              href="/write"
+              style={{ visibility: postpage ? 'hidden' : 'visible' }}
+            >
+              <BsPencilSquare style={{ marginBottom: '-2px' }} />
+              <span>Viết bài</span>
+            </Link>
+            <Link className={styles.userLink} href="/profile">
+              <div className={styles.userImage}>
+                <img src={user.picture || '/default-avatar.svg'} alt="" referrerPolicy="no-referrer" />
+              </div>
+            </Link>
+            <Link href="" className={styles.logout} onClick={logoutFunction}>
+              Đăng xuất
+            </Link>
+          </div>
+        ) : (
+          <div className={styles.links}>
+            <Link className={styles.addButton} href="/auth">
+              <BsPencilSquare style={{ marginBottom: '-2px' }} />
+              <span>Viết bài</span>
+            </Link>
+            <Link href="/auth" className={styles.logout}>
+              Đăng nhập
+            </Link>
+          </div>
+        )}
+      </nav>
+
+      {/* Filter Bar - hiển thị ngay dưới navbar */}
+      {showFilters && (
+        <div className={styles.filterBar}>
+          <div className={styles.filterBarContent}>
+            {/* Categories */}
+            <div className={styles.categoryTabs}>
               {categories.map((cat) => (
                 <button
                   key={cat}
-                  className={`${styles.categoryBtn} ${category === cat ? styles.active : ''}`}
-                  onClick={() => handleCategoryClick(cat)}
+                  className={`${styles.categoryTab} ${category === cat ? styles.active : ''}`}
+                  onClick={() => setCategory(cat)}
                 >
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  {cat === 'all' ? 'Tất cả' :
+                   cat === 'food' ? 'Ẩm thực' : 
+                   cat === 'travelling' ? 'Du lịch' : 
+                   cat === 'lifestyle' ? 'Lifestyle' : 
+                   'Công nghệ'}
                 </button>
               ))}
             </div>
-          </div>
 
-          <div className={styles.filterSection}>
-            <h4>Filter & Sort</h4>
-            <div className={styles.filterOptions}>
+            {/* Filter & Sort */}
+            <div className={styles.filterSort}>
               <div className={styles.filterGroup}>
-                <span className={styles.filterLabel}>Filter:</span>
-                <div className={styles.filterButtons}>
-                  {['latest', 'popular', 'trending'].map((f) => (
-                    <button
-                      key={f}
-                      className={`${styles.filterBtn} ${filterBy === f ? styles.active : ''}`}
-                      onClick={() => setFilterBy(f)}
-                    >
-                      {f.charAt(0).toUpperCase() + f.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className={styles.filterGroup}>
-                <span className={styles.filterLabel}>Sort:</span>
-                <div className={styles.filterButtons}>
-                  {['date', 'views', 'likes'].map((s) => (
-                    <button
-                      key={s}
-                      className={`${styles.filterBtn} ${sortBy === s ? styles.active : ''}`}
-                      onClick={() => setSortBy(s)}
-                    >
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className={styles.search}>
-        <div className={styles.searchWrap}>
-          <input
-            className={styles.input}
-            onClick={() => setShowSearch(true)}
-            onChange={(e) => { setSearchContent(e.target.value); setShowSearch(true); onSearchChange(); }}
-            type="text"
-            value={searchContent}
-            placeholder="Search users..."
-          />
-          {searchContent && (
-            <button 
-              className={styles.clearSearch} 
-              onClick={() => { setSearchContent(''); setSearchResults([]); setShowSearch(false); }}
-              type="button"
-            >
-              <BsX size={18} />
-            </button>
-          )}
-          {showSearch && searchResults.length > 0 && (
-            <div className={styles.searchResult}>
-              <ul className={styles.searchList}>
-                {searchResults.map((i, idx) => (
-                  <li 
-                    key={idx} 
-                    className={styles.listItem}
-                    onClick={() => { setShowSearch(false); setSearchContent(''); setSearchResults([]); }}
+                <span className={styles.filterLabel}>Lọc:</span>
+                {['latest', 'popular', 'trending'].map((f) => (
+                  <button
+                    key={f}
+                    className={`${styles.filterBtn} ${filterBy === f ? styles.active : ''}`}
+                    onClick={() => setFilterBy(f)}
                   >
-                    <img className={styles.searchImg} src={i.pic || '/default-avatar.svg'} alt="" />
-                    <Link href={user ? `/profile/${i.id}` : '/auth'}>
-                      <p>{i.name}</p>
-                    </Link>
-                  </li>
+                    {f === 'latest' ? 'Mới nhất' : f === 'popular' ? 'Phổ biến' : 'Xu hướng'}
+                  </button>
                 ))}
-              </ul>
+              </div>
+              <div className={styles.divider} />
+              <div className={styles.filterGroup}>
+                <span className={styles.filterLabel}>Sắp xếp:</span>
+                {['date', 'views', 'likes'].map((s) => (
+                  <button
+                    key={s}
+                    className={`${styles.filterBtn} ${sortBy === s ? styles.active : ''}`}
+                    onClick={() => setSortBy(s)}
+                  >
+                    {s === 'date' ? 'Ngày' : s === 'views' ? 'Lượt xem' : 'Lượt thích'}
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
-        </div>
-        <div className={styles.searchIcon} onClick={() => { setShowSearch(true); onSearchChange(); }}>
-          <BsSearch size={20} />
-        </div>
-      </div>
-
-      {user ? (
-        <div className={styles.links}>
-          <Link
-            className={styles.write}
-            href="/write"
-            style={{ visibility: postpage ? 'hidden' : 'visible' }}
-          >
-            <BsPencilSquare style={{ marginBottom: '-2px' }} />
-            <span>Add</span>
-          </Link>
-          <Link className={styles.userLink} href="/profile">
-            <div className={styles.userImage}>
-              <img src={user.picture || '/default-avatar.svg'} alt="" referrerPolicy="no-referrer" />
-            </div>
-          </Link>
-          <Link href="" className={styles.logout} onClick={logoutFunction}>
-            Log Out
-          </Link>
-        </div>
-      ) : (
-        <div className={styles.links}>
-          <Link className={styles.addButton} href="/auth">
-            <BsPencilSquare style={{ marginBottom: '-2px' }} />
-            <span>Add</span>
-          </Link>
-          <Link href="/auth" className={styles.logout}>
-            SignUp | LogIn
-          </Link>
+          </div>
         </div>
       )}
-    </nav>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import dynamic from 'next/dynamic';
@@ -13,12 +13,19 @@ const JoditEditor = dynamic(() => import('jodit-react'), {
   loading: () => <div className={styles.editorLoading}>Đang tải trình soạn thảo...</div>
 });
 
-const categories = ['food', 'travelling', 'lifestyle', 'tech'];
+const categories = [
+  { value: 'food', label: 'Ẩm thực' },
+  { value: 'travelling', label: 'Du lịch' },
+  { value: 'lifestyle', label: 'Lifestyle' },
+  { value: 'tech', label: 'Công nghệ' }
+];
 
 export default function Editor() {
   const router = useRouter();
   const user = useSelector((state) => state.user);
   const [mounted, setMounted] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -32,6 +39,19 @@ export default function Editor() {
     setMounted(true);
   }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedCategory = categories.find(c => c.value === category);
+
   const config = useMemo(() => ({
     readonly: false,
     placeholder: 'Bắt đầu viết bài của bạn...',
@@ -41,33 +61,26 @@ export default function Editor() {
     uploader: {
       insertImageAsBase64URI: true
     },
-    // Full toolbar
+    // Simplified professional toolbar
     buttons: [
-      'bold', 'italic', 'underline', 'strikethrough', '|',
+      'bold', 'italic', 'underline', '|',
       'ul', 'ol', '|',
-      'font', 'fontsize', 'brush', 'paragraph', '|',
-      'image', 'table', 'link', '|',
+      'fontsize', 'paragraph', '|',
+      'image', 'link', '|',
       'align', '|',
-      'undo', 'redo', '|',
-      'hr', 'eraser', 'fullsize'
+      'undo', 'redo'
     ],
-    // Font options
+    // Remove tabs and unnecessary icons
+    showCharsCounter: false,
+    showWordsCounter: false,
+    showXPathInStatusbar: false,
+    showFilesCounter: false,
+    showPoweredBy: false,
+    // Font options - simplified
     controls: {
-      font: {
-        list: {
-          '': '- Font -',
-          'Arial, Helvetica, sans-serif': 'Arial',
-          'Comic Sans MS, cursive': 'Comic Sans',
-          'Courier New, Courier, monospace': 'Courier New',
-          'Georgia, serif': 'Georgia',
-          'Tahoma, Geneva, sans-serif': 'Tahoma',
-          'Times New Roman, Times, serif': 'Times New Roman',
-          'Verdana, Geneva, sans-serif': 'Verdana',
-        }
-      },
       fontsize: {
         list: [
-          '8', '10', '12', '14', '16', '18', '20', '24', '28', '32', '36', '48', '72'
+          '12', '14', '16', '18', '20', '24', '28', '32'
         ]
       },
       paragraph: {
@@ -76,20 +89,11 @@ export default function Editor() {
           h1: 'Tiêu đề 1',
           h2: 'Tiêu đề 2', 
           h3: 'Tiêu đề 3',
-          h4: 'Tiêu đề 4',
           blockquote: 'Trích dẫn',
         }
       }
     },
-    // Colors
-    colors: [
-      '#000000', '#434343', '#666666', '#999999', '#cccccc', '#ffffff',
-      '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#9900ff', '#ff00ff',
-    ],
     // Settings
-    showCharsCounter: true,
-    showWordsCounter: true,
-    showXPathInStatusbar: false,
     askBeforePasteHTML: false,
     askBeforePasteFromWord: false,
     defaultActionOnPaste: 'insert_clear_html',
@@ -208,16 +212,33 @@ export default function Editor() {
         <div className={styles.row}>
           <div className={styles.field}>
             <label>Danh mục</label>
-            <select value={category} onChange={(e) => setCategory(e.target.value)}>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat === 'food' ? '🍔 Ẩm thực' : 
-                   cat === 'travelling' ? '✈️ Du lịch' : 
-                   cat === 'lifestyle' ? '🌿 Lifestyle' : 
-                   '💻 Công nghệ'}
-                </option>
-              ))}
-            </select>
+            <div className={styles.customSelect} ref={dropdownRef}>
+              <div 
+                className={`${styles.selectTrigger} ${dropdownOpen ? styles.open : ''}`}
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+              >
+                <span>{selectedCategory?.label}</span>
+                <svg width="12" height="12" viewBox="0 0 12 12">
+                  <path fill="currentColor" d="M6 8L1 3h10z"/>
+                </svg>
+              </div>
+              {dropdownOpen && (
+                <div className={styles.selectOptions}>
+                  {categories.map((cat) => (
+                    <div
+                      key={cat.value}
+                      className={`${styles.selectOption} ${category === cat.value ? styles.selected : ''}`}
+                      onClick={() => {
+                        setCategory(cat.value);
+                        setDropdownOpen(false);
+                      }}
+                    >
+                      {cat.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className={styles.field}>
@@ -247,7 +268,7 @@ export default function Editor() {
         {error && <div className={styles.error}>{error}</div>}
 
         <button type="submit" disabled={loading} className={styles.submit}>
-          {loading ? 'Đang đăng...' : '🚀 Đăng bài viết'}
+          {loading ? 'Đang đăng...' : 'Đăng bài viết'}
         </button>
       </form>
     </div>

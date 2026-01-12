@@ -75,15 +75,26 @@
   position: relative;
 }
 
+.menuOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9;
+}
+
 .menu {
   position: absolute;
   right: 0;
   top: 100%;
   background: white;
   border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: 0.5rem;
+  border-radius: 8px;
+  padding: 0.25rem;
   z-index: 10;
+  min-width: 120px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .reportBtn {
@@ -91,6 +102,42 @@
   border: none;
   cursor: pointer;
   color: #dc3545;
+  padding: 0.5rem 1rem;
+  width: 100%;
+  text-align: left;
+}
+
+.reportBtn:hover {
+  background: #f8f9fa;
+}
+
+.editBtn,
+.deleteBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  width: 100%;
+  text-align: left;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+  border-radius: 6px;
+}
+
+.editBtn {
+  color: var(--green-primary, #2d8a4e);
+}
+
+.editBtn:hover {
+  background: var(--green-pale, #e8f5e9);
+}
+
+.deleteBtn {
+  color: #dc3545;
+}
+
+.deleteBtn:hover {
+  background: #ffeaea;
 }
 
 .modal {
