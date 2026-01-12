@@ -91,6 +91,12 @@ exports.register = async (req, res) => {
       bookmarks:[],
     });
   } catch (error) {
+    // Handle duplicate email error from MongoDB unique index
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: "Email này đã được đăng ký, vui lòng dùng email khác",
+      });
+    }
     // Log error internally but don't expose details (Requirement 8.1)
     logSecurityEvent(SecurityEventType.INVALID_INPUT, {
       ip: req.ip,

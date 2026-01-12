@@ -80,20 +80,32 @@ passport.use(new GoogleStrategy({
       const tempPassword = generateRandomPassword();
       const hashedPassword = await bcrypt.hash(tempPassword, 10);
       
-      const newUser = new User({
-        googleId: profile.id,
-        email: email,
-        picture: photoUrl,
-        name: profile.displayName,
-        password: hashedPassword,
-        hasSetPassword: false, // New Google user hasn't set their own password
-        verify: true,
-        likeslist: {},
-        bookmarkslist: {}
-      });
-      
-      await newUser.save();
-      return done(null, newUser);
+      try {
+        const newUser = new User({
+          googleId: profile.id,
+          email: email,
+          picture: photoUrl,
+          name: profile.displayName,
+          password: hashedPassword,
+          hasSetPassword: false, // New Google user hasn't set their own password
+          verify: true,
+          likeslist: {},
+          bookmarkslist: {}
+        });
+        
+        await newUser.save();
+        return done(null, newUser);
+      } catch (saveError) {
+        // Handle race condition - user might have been created by another request
+        if (saveError.code === 11000) {
+          // Duplicate email - fetch the existing user
+          const existingUser = await User.findOne({ email: email });
+          if (existingUser) {
+            return done(null, existingUser);
+          }
+        }
+        throw saveError;
+      }
     }
     catch (error) {
       console.error('Google auth error:', error);

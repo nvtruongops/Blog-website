@@ -8,6 +8,9 @@ const userSchema = new Schema(
     email: {
       type: String,
       required: true,
+      unique: true, // Prevent duplicate emails
+      lowercase: true, // Normalize email to lowercase
+      trim: true,
     },
     password: {
       type: String,
