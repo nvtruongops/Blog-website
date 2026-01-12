@@ -14,8 +14,6 @@ jobs:
   deploy-backend:
     runs-on: ubuntu-latest
     name: Deploy Backend
-    env:
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_BACKEND_PROJECT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,6 +25,12 @@ jobs:
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
+
+      - name: Create Vercel project config
+        run: |
+          mkdir -p .vercel
+          echo '{"projectId":"${{ secrets.VERCEL_BACKEND_PROJECT_ID }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
+        working-directory: ./backend
 
       - name: Deploy Backend to Vercel
         run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
@@ -35,8 +39,6 @@ jobs:
   deploy-client:
     runs-on: ubuntu-latest
     name: Deploy Client
-    env:
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_CLIENT_PROJECT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,6 +50,12 @@ jobs:
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
+
+      - name: Create Vercel project config
+        run: |
+          mkdir -p .vercel
+          echo '{"projectId":"${{ secrets.VERCEL_CLIENT_PROJECT_ID }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
+        working-directory: ./client
 
       - name: Deploy Client to Vercel
         run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
