@@ -17,13 +17,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
+
+      - name: Link Vercel Project
+        run: |
+          mkdir -p .vercel
+          cat > .vercel/project.json << EOF
+          {"projectId":"${{ secrets.VERCEL_BACKEND_PROJECT_ID }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}
+          EOF
+          cat .vercel/project.json
+        working-directory: ./backend
 
       - name: Pull Vercel Environment
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
@@ -47,13 +51,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
+
+      - name: Link Vercel Project
+        run: |
+          mkdir -p .vercel
+          cat > .vercel/project.json << EOF
+          {"projectId":"${{ secrets.VERCEL_CLIENT_PROJECT_ID }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}
+          EOF
+          cat .vercel/project.json
+        working-directory: ./client
 
       - name: Pull Vercel Environment
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
