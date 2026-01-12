@@ -89,7 +89,38 @@ app.use(xss());
 app.use(hpp());
 
 mongoose.set("strictQuery", false);
-mongoose.connect(keys.MONGO_URI);
+
+// MongoDB connection with retry logic for serverless
+let isConnected = false;
+const connectDB = async () => {
+  if (isConnected) return;
+  
+  try {
+    await mongoose.connect(keys.MONGO_URI, {
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      maxPoolSize: 10,
+      minPoolSize: 1,
+    });
+    isConnected = true;
+    console.log('MongoDB connected');
+  } catch (error) {
+    console.error('MongoDB connection error:', error.message);
+  }
+};
+
+// Handle connection events
+mongoose.connection.on('disconnected', () => {
+  isConnected = false;
+  console.log('MongoDB disconnected');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB error:', err.message);
+  isConnected = false;
+});
+
+connectDB();
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');

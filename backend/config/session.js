@@ -23,11 +23,16 @@ const configureSession = () => {
   const store = new MongoDBStore({
     uri: keys.MONGO_URI,
     collection: 'sessions',
-    expires: 15 * 24 * 60 * 60 * 1000 // 15 days
+    expires: 15 * 24 * 60 * 60 * 1000, // 15 days
+    connectionOptions: {
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+    }
   });
 
   store.on('error', (error) => {
-    console.error('Session store error:', error);
+    // Don't crash on session store errors - log and continue
+    console.error('Session store error:', error.message);
   });
 
   const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
