@@ -18,6 +18,8 @@ jobs:
   deploy-backend:
     runs-on: ubuntu-latest
     name: Deploy Backend
+    env:
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_BACKEND_PROJECT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,24 +35,20 @@ jobs:
       - name: Pull Vercel Environment (Backend)
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: ./backend
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_BACKEND_PROJECT_ID }}
 
       - name: Build Backend
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: ./backend
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_BACKEND_PROJECT_ID }}
 
       - name: Deploy Backend to Vercel
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: ./backend
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_BACKEND_PROJECT_ID }}
 
   deploy-client:
     runs-on: ubuntu-latest
     name: Deploy Client
+    env:
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_CLIENT_PROJECT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -66,17 +64,11 @@ jobs:
       - name: Pull Vercel Environment (Client)
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: ./client
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_CLIENT_PROJECT_ID }}
 
       - name: Build Client
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: ./client
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_CLIENT_PROJECT_ID }}
 
       - name: Deploy Client to Vercel
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: ./client
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_CLIENT_PROJECT_ID }}
