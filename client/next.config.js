@@ -42,7 +42,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
               "img-src 'self' data: https: blob:",
               "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
-              "connect-src 'self' http://localhost:5002 https://backend-indol-two-98.vercel.app https://res.cloudinary.com",
+              `connect-src 'self' ${(process.env.NEXT_PUBLIC_BACKEND_URL || '').trim()} https://accounts.google.com https://www.googleapis.com https://res.cloudinary.com`,
               "frame-src 'self' https://accounts.google.com",
               "object-src 'none'"
             ].join('; ')

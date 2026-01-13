@@ -20,7 +20,8 @@ export const metadata = {
  */
 export default function RootLayout({ children }) {
   // Get backend URL for CSP connect-src directive
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+  // Trim to remove any whitespace or \r\n characters from Vercel env
+  const backendUrl = (process.env.NEXT_PUBLIC_BACKEND_URL || '').trim();
   
   return (
     <html lang="en">
