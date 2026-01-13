@@ -28,8 +28,8 @@ const { requestLogger } = require('../helper/securityLogger');
 const allowedOrigins = [
   keys.FRONTEND_URL, 
   keys.BACKEND_URL,
-  'https://client-eight-cyan-44.vercel.app',
-  'https://backend-indol-two-98.vercel.app'
+  'http://localhost:3000', // Local development
+  'http://localhost:5002'  // Local development
 ].filter(Boolean);
 
 const corsOptions = {
