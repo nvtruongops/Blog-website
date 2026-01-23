@@ -201,6 +201,19 @@ app.use("/upload", uploadLimiter);
 app.use("/", uploadRoutes);
 app.use("/", postRoutes);
 
+// Admin routes
+const adminRoutes = require("../routes/admin.js");
+app.use("/admin", adminRoutes);
+
+// Moderator routes
+const moderatorRoutes = require("../routes/moderator.js");
+app.use("/moderator", moderatorRoutes);
+
+// Report routes (for users to submit reports)
+const { createReport } = require("../controllers/moderator.js");
+const { authUser } = require("../middleware/auth");
+app.post("/reports", authUser, createReport);
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
