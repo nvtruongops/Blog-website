@@ -28,7 +28,9 @@ export default function Article({ post, __id }) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState([]);
   const [comment, setComment] = useState('');
-  const [reportReason, setReportReason] = useState('');
+  const [reportReason, setReportReason] = useState('spam');
+  const [reportDescription, setReportDescription] = useState('');
+  const [showReportModal, setShowReportModal] = useState(false);
   const [viewCount, setViewCount] = useState(0);
   const [likeCount, setLikeCount] = useState(0);
   const [postUser, setPostUser] = useState(post.user);
@@ -217,8 +219,19 @@ export default function Article({ post, __id }) {
 
   const handleReport = async (e) => {
     e.preventDefault();
-    await reportcontent(__id, postUser._id, user.id, postUser.name, user.name, reportReason);
-    toast.success('Reported');
+    if (!reportReason) {
+      toast.error('Please select a reason');
+      return;
+    }
+    try {
+      await reportcontent(__id, postUser._id, user.id, postUser.name, user.name, reportReason);
+      toast.success('Report submitted successfully');
+      setShowReportModal(false);
+      setReportReason('spam');
+      setReportDescription('');
+    } catch (error) {
+      toast.error('Failed to submit report');
+    }
   };
 
   const handleEdit = () => {
@@ -290,18 +303,80 @@ export default function Article({ post, __id }) {
                         </button>
                       </>
                     ) : (
-                      <Popup trigger={<button className={styles.reportBtn}>Report</button>} modal>
-                        <div className={styles.modal}>
-                          <h2>Report</h2>
-                          <input
-                            type="text"
-                            placeholder="Enter reason..."
-                            value={reportReason}
-                            onChange={(e) => setReportReason(e.target.value)}
-                          />
-                          <button onClick={handleReport}>Submit</button>
-                        </div>
-                      </Popup>
+                      <>
+                        <button 
+                          className={styles.reportBtn}
+                          onClick={() => setShowReportModal(true)}
+                        >
+                          Report
+                        </button>
+                        
+                        {showReportModal && (
+                          <div className={styles.reportModalOverlay} onClick={() => setShowReportModal(false)}>
+                            <div className={styles.reportModal} onClick={(e) => e.stopPropagation()}>
+                              <div className={styles.reportModalHeader}>
+                                <h2>Report Post</h2>
+                                <button 
+                                  className={styles.reportModalClose}
+                                  onClick={() => setShowReportModal(false)}
+                                >
+                                  ×
+                                </button>
+                              </div>
+                              
+                              <form onSubmit={handleReport} className={styles.reportForm}>
+                                <div className={styles.reportFormGroup}>
+                                  <label>Reason for reporting</label>
+                                  <select
+                                    value={reportReason}
+                                    onChange={(e) => setReportReason(e.target.value)}
+                                    required
+                                  >
+                                    <option value="spam">Spam</option>
+                                    <option value="harassment">Harassment</option>
+                                    <option value="hate_speech">Hate Speech</option>
+                                    <option value="violence">Violence</option>
+                                    <option value="inappropriate_content">Inappropriate Content</option>
+                                    <option value="misinformation">Misinformation</option>
+                                    <option value="copyright">Copyright Violation</option>
+                                    <option value="other">Other</option>
+                                  </select>
+                                </div>
+                                
+                                <div className={styles.reportFormGroup}>
+                                  <label>Additional details (optional)</label>
+                                  <textarea
+                                    value={reportDescription}
+                                    onChange={(e) => setReportDescription(e.target.value)}
+                                    placeholder="Provide more context about this report..."
+                                    rows="4"
+                                    maxLength="500"
+                                  />
+                                  <span className={styles.charCount}>
+                                    {reportDescription.length}/500
+                                  </span>
+                                </div>
+                                
+                                <div className={styles.reportModalFooter}>
+                                  <button 
+                                    type="button"
+                                    className={styles.reportCancelBtn}
+                                    onClick={() => setShowReportModal(false)}
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button 
+                                    type="submit"
+                                    className={styles.reportSubmitBtn}
+                                  >
+                                    Submit Report
+                                  </button>
+                                </div>
+                              </form>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </>

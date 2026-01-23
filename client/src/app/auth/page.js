@@ -72,7 +72,12 @@ export default function AuthPage() {
       setTimeout(() => {
         dispatch(login(data));
         Cookies.set('user', JSON.stringify(data), { expires: 15 });
-        router.push('/');
+        // Redirect based on user role
+        if (data.role === 'admin') {
+          router.push('/admin');
+        } else {
+          router.push('/');
+        }
       }, 2000);
     } catch (error) {
       setError(error.response?.data?.message || 'Login failed');

@@ -40,6 +40,16 @@ export const fetchCSRFToken = async () => {
     return csrfToken;
   } catch (error) {
     console.error('Failed to fetch CSRF token:', error.message);
+    
+    // Log more details for debugging
+    if (error.response) {
+      console.error('CSRF Error Details:', {
+        status: error.response.status,
+        data: error.response.data,
+        message: error.response.data?.message || error.response.data?.error
+      });
+    }
+    
     return null;
   }
 };

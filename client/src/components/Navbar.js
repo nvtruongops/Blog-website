@@ -13,8 +13,8 @@ import styles from './Navbar.module.css';
 
 const categories = ['all', 'food', 'travelling', 'lifestyle', 'tech'];
 
-export default function Navbar({ 
-  postpage, 
+export default function Navbar({
+  postpage,
   showFilters = false,
   category,
   setCategory,
@@ -82,8 +82,8 @@ export default function Navbar({
               placeholder="Tìm kiếm bài viết..."
             />
             {localSearch && (
-              <button 
-                className={styles.clearSearch} 
+              <button
+                className={styles.clearSearch}
                 onClick={handleClearSearch}
                 type="button"
               >
@@ -100,6 +100,17 @@ export default function Navbar({
 
         {user ? (
           <div className={styles.links}>
+            {/* Admin/Moderator Links */}
+            {user.role === 'admin' && (
+              <Link className={styles.adminLink} href="/admin">
+                <span>Admin Panel</span>
+              </Link>
+            )}
+            {user.role === 'moderator' && (
+              <Link className={styles.moderatorLink} href="/moderator">
+                <span>Moderator</span>
+              </Link>
+            )}
             <Link
               className={styles.write}
               href="/write"
@@ -143,10 +154,10 @@ export default function Navbar({
                   onClick={() => setCategory(cat)}
                 >
                   {cat === 'all' ? 'Tất cả' :
-                   cat === 'food' ? 'Ẩm thực' : 
-                   cat === 'travelling' ? 'Du lịch' : 
-                   cat === 'lifestyle' ? 'Lifestyle' : 
-                   'Công nghệ'}
+                    cat === 'food' ? 'Ẩm thực' :
+                      cat === 'travelling' ? 'Du lịch' :
+                        cat === 'lifestyle' ? 'Lifestyle' :
+                          'Công nghệ'}
                 </button>
               ))}
             </div>

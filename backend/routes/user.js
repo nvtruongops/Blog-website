@@ -222,6 +222,7 @@ router.post("/login/success", async (req, res) => {
       likes: freshUser.likes || [],
       bookmarks: freshUser.bookmarks || [],
       email: freshUser.email,
+      role: freshUser.role || 'user',
     };
     
     // Regenerate session to prevent session fixation attacks after OAuth login

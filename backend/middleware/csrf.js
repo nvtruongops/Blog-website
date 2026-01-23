@@ -85,6 +85,15 @@ const timingSafeEqual = (a, b) => {
  * @param {Function} next - Next middleware function
  */
 const setCSRFToken = (req, res, next) => {
+  // Check if session exists
+  if (!req.session) {
+    console.error('Session not available in setCSRFToken middleware');
+    return res.status(500).json({ 
+      message: 'Session not initialized',
+      error: 'Unable to set CSRF token without session'
+    });
+  }
+
   // Generate new CSRF token if session doesn't have one
   if (!req.session.csrfToken) {
     req.session.csrfToken = generateCSRFToken();
@@ -107,12 +116,39 @@ const setCSRFToken = (req, res, next) => {
  * @param {Response} res - Express response object
  */
 const getCSRFToken = (req, res) => {
-  // Ensure session has a CSRF token
-  if (!req.session.csrfToken) {
-    req.session.csrfToken = generateCSRFToken();
-  }
+  try {
+    // Check if session exists
+    if (!req.session) {
+      console.error('Session not initialized - check MongoDB connection and session middleware');
+      return res.status(500).json({ 
+        message: 'Session initialization failed',
+        error: 'Unable to create session. Please check backend logs.'
+      });
+    }
 
-  res.json({ csrfToken: req.session.csrfToken });
+    // Ensure session has a CSRF token
+    if (!req.session.csrfToken) {
+      req.session.csrfToken = generateCSRFToken();
+    }
+
+    // Save session to ensure it's persisted
+    req.session.save((err) => {
+      if (err) {
+        console.error('Failed to save session:', err.message);
+        return res.status(500).json({ 
+          message: 'Session save failed',
+          error: err.message
+        });
+      }
+      res.json({ csrfToken: req.session.csrfToken });
+    });
+  } catch (error) {
+    console.error('CSRF token generation error:', error);
+    return res.status(500).json({ 
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
 };
 
 module.exports = {

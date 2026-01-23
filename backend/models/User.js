@@ -39,6 +39,28 @@ const userSchema = new Schema(
     about: {
       type: String
     },
+    role: {
+      type: String,
+      enum: ['user', 'moderator', 'admin'],
+      default: 'user'
+    },
+    isBanned: {
+      type: Boolean,
+      default: false
+    },
+    bannedAt: {
+      type: Date,
+      default: null
+    },
+    bannedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    banReason: {
+      type: String,
+      default: null
+    },
     bookmarks: {
       type: Array,
       default: []

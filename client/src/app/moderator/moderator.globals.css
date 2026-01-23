@@ -1,0 +1,56 @@
+/* Moderator Dashboard Global Styles */
+/* Theme: Earth Brown & Forest Green Harmony */
+
+:root {
+    /* Fonts - Simple & Clean */
+    --font-serif: 'Georgia', 'Times New Roman', serif;
+    --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+    /* Primary - Earth Brown Tones */
+    --mod-primary: #6D4C41;
+    /* Warm Earth Brown */
+    --mod-primary-light: #8D6E63;
+    /* Light Brown */
+    --mod-primary-dark: #4E342E;
+    /* Deep Brown */
+    --mod-primary-pale: #EFEBE9;
+    /* Very Light Brown/Cream */
+
+    /* Accent - Forest Green Tones */
+    --mod-accent: #388E3C;
+    /* Fresh Forest Green */
+    --mod-accent-light: #66BB6A;
+    /* Light Green */
+    --mod-accent-dark: #2E7D32;
+    /* Deep Green */
+    --mod-accent-pale: #E8F5E9;
+    /* Very Light Green */
+
+    /* Backgrounds - Natural & Clean */
+    --mod-bg: #F5F5F5;
+    /* Light Gray Background */
+    --mod-card: #FFFFFF;
+    /* Pure White Cards */
+    --mod-sidebar: #4E342E;
+    /* Deep Brown Sidebar */
+
+    /* Borders & Text */
+    --mod-border: #D7CCC8;
+    /* Soft Brown Border */
+    --mod-text: #212121;
+    /* Dark Text */
+    --mod-text-secondary: #6D4C41;
+    /* Brown Text */
+    --mod-text-muted: #9E9E9E;
+    /* Gray Text */
+
+    /* Status Colors */
+    --mod-success: #388E3C;
+    /* Green */
+    --mod-warning: #F57C00;
+    /* Orange */
+    --mod-danger: #D32F2F;
+    /* Red */
+    --mod-info: #1976D2;
+    /* Blue */
+}

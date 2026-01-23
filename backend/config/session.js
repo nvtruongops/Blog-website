@@ -27,12 +27,19 @@ const configureSession = () => {
     connectionOptions: {
       serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
+      maxPoolSize: 10,
+      minPoolSize: 1,
     }
   });
 
   store.on('error', (error) => {
     // Don't crash on session store errors - log and continue
     console.error('Session store error:', error.message);
+  });
+
+  // Add connected event for debugging
+  store.on('connected', () => {
+    console.log('Session store connected to MongoDB');
   });
 
   const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';

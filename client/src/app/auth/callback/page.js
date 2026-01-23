@@ -35,8 +35,14 @@ export default function AuthCallback() {
           setIsSuccess(true);
           setStatus('Đăng nhập thành công!');
           
-          // Redirect after short delay
-          setTimeout(() => router.push('/'), 1500);
+          // Redirect based on user role
+          setTimeout(() => {
+            if (data.role === 'admin') {
+              router.push('/admin');
+            } else {
+              router.push('/');
+            }
+          }, 1500);
         } else {
           setStatus('Đăng nhập thất bại');
           setTimeout(() => router.push('/auth'), 2000);

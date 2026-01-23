@@ -24,29 +24,66 @@ exports.sendreportmails = async (req, res) => {
       name2,
       reason
     } = req.body;
+
+    // Validate inputs
+    if (!pid || !postid || !userid || !reason) {
+      return res.status(400).json({ msg: "Missing required fields" });
+    }
+
     const reporter = await User.findById(userid);
     const reported = await User.findById(postid);
+    
     if (!reporter || !reported) {
       return res.status(404).json({ msg: "User not found" });
     }
-    var emailr = reporter.email
-    var emailrd = reported.email
-    var namer = reporter.name
-    var namerd = reported.name
+
+    // Create report in database
+    const Report = require('../models/Report');
+    const newReport = new Report({
+      reporter: userid,
+      targetType: 'post',
+      targetId: pid,
+      targetModel: 'Post',
+      reason: reason,
+      description: `Report from ${name2} about post by ${name1}`,
+      status: 'pending'
+    });
+
+    await newReport.save();
+
+    // Send email notifications
+    var emailr = reporter.email;
+    var emailrd = reported.email;
+    var namer = reporter.name;
+    var namerd = reported.name;
+    
     try {
       sendReportMail(emailr, emailrd, namer, namerd, reason, pid);
     } catch (error) {
-      // Log error internally but don't expose details
+      console.error('Email sending error:', error);
+      // Continue even if email fails
     }
-    return res.status(200).json({ msg: "ok" });
+
+    return res.status(200).json({ 
+      msg: "ok",
+      message: "Report submitted successfully" 
+    });
   } catch (error) {
-    // Don't expose system details (Requirement 8.1)
+    console.error('Report submission error:', error);
     return res.status(500).json({ msg: "An error occurred" });
   }
 }
 exports.register = async (req, res) => {
   try {
     const { name, temail, password } = req.body;
+    
+    // Validate input types - prevent injection via objects
+    if (typeof name !== 'string' || typeof temail !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ 
+        message: "Invalid input types. All fields must be strings." 
+      });
+    }
+    
     if (!validateLength(name, 1, 50)) {
       return res
         .status(400)
@@ -72,14 +109,19 @@ exports.register = async (req, res) => {
 
     // Use bcrypt cost factor of 12 for security (Requirement 2.5)
     const hashed_password = await bcrypt.hash(password, BCRYPT_COST_FACTOR);
+    
+    // Explicitly set only allowed fields - prevent mass assignment
     const user = await new User({
       name: name,
       email: temail,
       password: hashed_password,
-      verify: true,
+      verify: false, // Always false for new users
+      verified: false, // Explicitly set to false
+      role: 'user', // Always 'user' for new registrations
       likeslist:{},
       bookmarkslist:{},
     }).save();
+    
     const token = generateToken({ id: user._id.toString() }, "15d");
     res.send({
       id: user._id,
@@ -89,6 +131,7 @@ exports.register = async (req, res) => {
       message: "Register Success !",
       likes:[],
       bookmarks:[],
+      role: user.role || 'user',
     });
   } catch (error) {
     // Handle duplicate email error from MongoDB unique index
@@ -1046,6 +1089,7 @@ exports.login = async (req, res) => {
       bookmark: user.bookmarks,
       likes: user.likes,
       email: user.email,
+      role: user.role || 'user',
     };
     
     // Regenerate session to prevent session fixation attacks (Security Best Practice)

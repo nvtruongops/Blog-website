@@ -1,0 +1,30 @@
+/* Admin Dashboard Global Styles */
+/* Color Palette: Forest Green + Earth Brown */
+
+:root {
+    /* Primary - Forest Green */
+    --admin-primary: #2d5a47;
+    --admin-primary-light: #3d7a5f;
+    --admin-primary-dark: #1e3d30;
+    --admin-primary-pale: #e8f0ec;
+
+    /* Secondary - Earth Brown */
+    --admin-brown: #6b4e31;
+    --admin-brown-light: #8b6a4a;
+    --admin-brown-dark: #4a3421;
+    --admin-brown-pale: #f5ebe0;
+
+    /* Neutral */
+    --admin-bg: #faf8f5;
+    --admin-card: #ffffff;
+    --admin-border: #d4c5b0;
+    --admin-text: #1a1a1a;
+    --admin-text-secondary: #4a4a4a;
+    --admin-text-muted: #7a7a7a;
+
+    /* Status Colors */
+    --admin-success: #2d5a47;
+    --admin-warning: #c4922a;
+    --admin-danger: #b54a4a;
+    --admin-info: #4a6b8a;
+}

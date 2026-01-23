@@ -74,15 +74,41 @@ app.use(hpp());
 
 // MongoDB connection with caching for serverless
 let cachedDb = null;
+let isConnected = false;
 async function connectToDatabase() {
-  if (cachedDb) {
+  if (cachedDb && isConnected) {
     return cachedDb;
   }
-  mongoose.set("strictQuery", false);
-  await mongoose.connect(keys.MONGO_URI);
-  cachedDb = mongoose.connection;
-  return cachedDb;
+  try {
+    mongoose.set("strictQuery", false);
+    await mongoose.connect(keys.MONGO_URI, {
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      maxPoolSize: 10,
+      minPoolSize: 1,
+    });
+    cachedDb = mongoose.connection;
+    isConnected = true;
+    console.log('MongoDB connected successfully');
+    return cachedDb;
+  } catch (error) {
+    console.error('MongoDB connection error:', error.message);
+    isConnected = false;
+    throw error;
+  }
 }
+
+// Handle connection events
+mongoose.connection.on('disconnected', () => {
+  isConnected = false;
+  console.log('MongoDB disconnected');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB error:', err.message);
+  isConnected = false;
+});
+
 connectToDatabase();
 
 app.use((req, res, next) => {
@@ -103,6 +129,48 @@ app.use((err, req, res, next) => {
 app.set("trust proxy", 1);
 app.use(cookieParser());
 app.use(configureSession());
+
+// Passport compatibility and session validation
+app.use((req, res, next) => {
+  if (req.session && !req.session.regenerate) {
+    req.session.regenerate = (cb) => {
+      cb();
+    };
+  }
+  if (req.session && !req.session.save) {
+    req.session.save = (cb) => {
+      cb();
+    };
+  }
+  next();
+});
+
+// Ensure database connection before processing requests
+app.use(async (req, res, next) => {
+  if (!isConnected) {
+    try {
+      await connectToDatabase();
+    } catch (error) {
+      console.error('Failed to connect to database:', error);
+      return res.status(500).json({ 
+        message: 'Database connection failed',
+        error: error.message 
+      });
+    }
+  }
+  
+  // Verify session is available for routes that need it
+  if (req.path.includes('/csrf-token') && !req.session) {
+    console.error('Session not initialized for CSRF endpoint');
+    return res.status(500).json({ 
+      message: 'Server configuration error',
+      error: 'Session initialization failed'
+    });
+  }
+  
+  next();
+});
+
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -142,7 +210,10 @@ app.get('/', (req, res) => {
   res.json({ 
     status: 'ok', 
     message: 'Blog API is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    mongoConnected: isConnected,
+    sessionConfigured: !!req.session
   });
 });
 
