@@ -217,7 +217,7 @@ app.get('/', (req, res) => {
     status: 'ok',
     message: 'Blog API is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
+    environment: keys.NODE_ENV || process.env.NODE_ENV || 'development',
     mongoConnected: isConnected,
     sessionConfigured: !!req.session
   });

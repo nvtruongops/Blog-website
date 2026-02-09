@@ -12,6 +12,7 @@ module.exports = {
     TOKEN_SECRET: trimEnv(process.env.TOKEN_SECRET),
     PASS: trimEnv(process.env.PASS),
     EMAIL_ID: trimEnv(process.env.EMAIL_ID),
+    NODE_ENV: trimEnv(process.env.NODE_ENV),
     PORT: process.env.PORT || 5002,
     BACKEND_URL: trimEnv(process.env.REACT_APP_BACKEND_URL),
     FRONTEND_URL: trimEnv(process.env.REACT_APP_FRONTEND_URL),
