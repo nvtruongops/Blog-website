@@ -33,3 +33,8 @@ yarn-error.log*
 
 .vercel
 .env*.local
+.env.clean
+.env.check
+.env.verify
+.env.production
+*.env.backup
