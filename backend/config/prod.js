@@ -1,4 +1,5 @@
 // Helper to trim env variables (fix Vercel \r\n issue)
+// This removes CRLF characters that may be added by Vercel CLI
 const trimEnv = (val) => val ? val.trim() : val;
 
 // Production environment configuration
