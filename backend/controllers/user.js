@@ -32,7 +32,7 @@ exports.sendreportmails = async (req, res) => {
 
     const reporter = await User.findById(userid);
     const reported = await User.findById(postid);
-    
+
     if (!reporter || !reported) {
       return res.status(404).json({ msg: "User not found" });
     }
@@ -56,7 +56,7 @@ exports.sendreportmails = async (req, res) => {
     var emailrd = reported.email;
     var namer = reporter.name;
     var namerd = reported.name;
-    
+
     try {
       sendReportMail(emailr, emailrd, namer, namerd, reason, pid);
     } catch (error) {
@@ -64,9 +64,9 @@ exports.sendreportmails = async (req, res) => {
       // Continue even if email fails
     }
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       msg: "ok",
-      message: "Report submitted successfully" 
+      message: "Report submitted successfully"
     });
   } catch (error) {
     console.error('Report submission error:', error);
@@ -76,14 +76,14 @@ exports.sendreportmails = async (req, res) => {
 exports.register = async (req, res) => {
   try {
     const { name, temail, password } = req.body;
-    
+
     // Validate input types - prevent injection via objects
     if (typeof name !== 'string' || typeof temail !== 'string' || typeof password !== 'string') {
-      return res.status(400).json({ 
-        message: "Invalid input types. All fields must be strings." 
+      return res.status(400).json({
+        message: "Invalid input types. All fields must be strings."
       });
     }
-    
+
     if (!validateLength(name, 1, 50)) {
       return res
         .status(400)
@@ -109,7 +109,7 @@ exports.register = async (req, res) => {
 
     // Use bcrypt cost factor of 12 for security (Requirement 2.5)
     const hashed_password = await bcrypt.hash(password, BCRYPT_COST_FACTOR);
-    
+
     // Explicitly set only allowed fields - prevent mass assignment
     const user = await new User({
       name: name,
@@ -118,10 +118,10 @@ exports.register = async (req, res) => {
       verify: false, // Always false for new users
       verified: false, // Explicitly set to false
       role: 'user', // Always 'user' for new registrations
-      likeslist:{},
-      bookmarkslist:{},
+      likeslist: {},
+      bookmarkslist: {},
     }).save();
-    
+
     const token = generateToken({ id: user._id.toString() }, "15d");
     res.send({
       id: user._id,
@@ -129,8 +129,8 @@ exports.register = async (req, res) => {
       picture: user.picture,
       token: token,
       message: "Register Success !",
-      likes:[],
-      bookmarks:[],
+      likes: [],
+      bookmarks: [],
       role: user.role || 'user',
     });
   } catch (error) {
@@ -156,7 +156,7 @@ exports.deletebookmark = async (req, res) => {
       postid,
       userid
     } = req.body;
-    
+
     // Authorization check: verify user can only modify their own bookmarks (Requirement 3.1)
     if (!req.user || !verifyOwnership(userid, req.user.id)) {
       logSecurityEvent(SecurityEventType.UNAUTHORIZED_ACCESS, {
@@ -168,7 +168,7 @@ exports.deletebookmark = async (req, res) => {
       });
       return res.status(403).json({ msg: "Unauthorized access" });
     }
-    
+
     const user = await User.findOne({ _id: userid });
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
@@ -186,9 +186,9 @@ exports.deletebookmark = async (req, res) => {
         }
       }
       user.bookmarks = m;
-      if(user.bookmarkslist){
-        if(user.bookmarkslist.has(`${postid}`)){
-        user.bookmarkslist.delete(`${postid}`);
+      if (user.bookmarkslist) {
+        if (user.bookmarkslist.has(`${postid}`)) {
+          user.bookmarkslist.delete(`${postid}`);
         }
       }
       user.save();
@@ -212,7 +212,7 @@ exports.deletelikes = async (req, res) => {
       postid,
       userid
     } = req.body;
-    
+
     // Authorization check: verify user can only modify their own likes (Requirement 3.1)
     if (!req.user || !verifyOwnership(userid, req.user.id)) {
       logSecurityEvent(SecurityEventType.UNAUTHORIZED_ACCESS, {
@@ -224,7 +224,7 @@ exports.deletelikes = async (req, res) => {
       });
       return res.status(403).json({ msg: "Unauthorized access" });
     }
-    
+
     const user = await User.findOne({ _id: userid });
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
@@ -242,9 +242,9 @@ exports.deletelikes = async (req, res) => {
         }
       }
       user.likes = m;
-      if(user.likeslist){
-        if(user.likeslist.has(`${postid}`)){
-        user.likeslist.delete(`${postid}`);
+      if (user.likeslist) {
+        if (user.likeslist.has(`${postid}`)) {
+          user.likeslist.delete(`${postid}`);
         }
       }
       user.save();
@@ -267,6 +267,19 @@ exports.checklikes = async (req, res) => {
       postid,
       userid
     } = req.body;
+
+    // Authorization check: verify user can only check their own likes (Requirement 3.1)
+    if (!req.user || !verifyOwnership(userid, req.user.id)) {
+      logSecurityEvent(SecurityEventType.UNAUTHORIZED_ACCESS, {
+        ip: req.ip,
+        userId: req.user?.id,
+        endpoint: `${req.method} ${req.originalUrl}`,
+        userAgent: req.get('User-Agent'),
+        message: 'Unauthorized likes check attempt'
+      });
+      return res.status(403).json({ msg: "Unauthorized access" });
+    }
+
     const user = await User.findOne({ _id: userid });
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
@@ -276,8 +289,8 @@ exports.checklikes = async (req, res) => {
       return res.status(202).json({ msg: "Does not exist" });
     }
     else {
-      if(user.likeslist){
-        if(user.likeslist.has(`${postid}`)){
+      if (user.likeslist) {
+        if (user.likeslist.has(`${postid}`)) {
           return res.status(202).json({ msg: "ok" });
         }
       }
@@ -299,7 +312,7 @@ exports.getallLikes = async (req, res) => {
     const {
       userid
     } = req.body;
-    
+
     // Authorization check: verify user can only access their own likes (Requirement 3.1)
     if (!req.user || !verifyOwnership(userid, req.user.id)) {
       logSecurityEvent(SecurityEventType.UNAUTHORIZED_ACCESS, {
@@ -311,7 +324,7 @@ exports.getallLikes = async (req, res) => {
       });
       return res.status(403).json({ msg: "Unauthorized access" });
     }
-    
+
     const user = await User.findOne({ _id: userid }).select("likes");
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
@@ -328,7 +341,7 @@ exports.getallBookmarks = async (req, res) => {
     const {
       userid
     } = req.body;
-    
+
     // Authorization check: verify user can only access their own bookmarks (Requirement 3.1)
     if (!req.user || !verifyOwnership(userid, req.user.id)) {
       logSecurityEvent(SecurityEventType.UNAUTHORIZED_ACCESS, {
@@ -340,7 +353,7 @@ exports.getallBookmarks = async (req, res) => {
       });
       return res.status(403).json({ msg: "Unauthorized access" });
     }
-    
+
     const user = await User.findOne({ _id: userid }).select("bookmarks");
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
@@ -358,6 +371,19 @@ exports.checkbookmark = async (req, res) => {
       postid,
       userid
     } = req.body;
+
+    // Authorization check: verify user can only check their own bookmarks (Requirement 3.1)
+    if (!req.user || !verifyOwnership(userid, req.user.id)) {
+      logSecurityEvent(SecurityEventType.UNAUTHORIZED_ACCESS, {
+        ip: req.ip,
+        userId: req.user?.id,
+        endpoint: `${req.method} ${req.originalUrl}`,
+        userAgent: req.get('User-Agent'),
+        message: 'Unauthorized bookmark check attempt'
+      });
+      return res.status(403).json({ msg: "Unauthorized access" });
+    }
+
     const user = await User.findOne({ _id: userid });
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
@@ -367,12 +393,12 @@ exports.checkbookmark = async (req, res) => {
       return res.status(202).json({ msg: "Does not exist" });
     }
     else {
-      if(user.bookmarkslist){
-        if(user.bookmarkslist.has(`${postid}`)){
+      if (user.bookmarkslist) {
+        if (user.bookmarkslist.has(`${postid}`)) {
           return res.status(202).json({ msg: "ok" });
         }
       }
-      for (var i = 0; i < m.length; i++) { 
+      for (var i = 0; i < m.length; i++) {
         if (m[i] == postid) {
           return res.status(202).json({ msg: "ok" });
         }
@@ -410,7 +436,7 @@ exports.bookmark = async (req, res) => {
       postid,
       userid
     } = req.body;
-    
+
     // Authorization check: verify user can only modify their own bookmarks (Requirement 3.1)
     if (!req.user || !verifyOwnership(userid, req.user.id)) {
       logSecurityEvent(SecurityEventType.UNAUTHORIZED_ACCESS, {
@@ -422,38 +448,27 @@ exports.bookmark = async (req, res) => {
       });
       return res.status(403).json({ msg: "Unauthorized access" });
     }
-    
-    const user = await User.findOne({ _id: userid });
+
+    // Check if post already exists in bookmarks
+    const user = await User.findById(userid).select('bookmarks');
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
     }
-    var m = user.bookmarks;
-    var f = 0;
-    if (m.length == 0) {
-      m.push(postid);
-    }
-    else {
-      for (var i = 0; i < m.length; i++) {
-        if (m[i] == postid) {
-          f = 1;
-          m.splice(i, 1);
-          m.push(postid);
-          break;
-        }
+
+    const alreadyBookmarked = user.bookmarks.some(id => id.toString() === postid);
+
+    // Use atomic operation to prevent race conditions
+    await User.findByIdAndUpdate(
+      userid,
+      {
+        $addToSet: { bookmarks: postid }, // Only adds if not exists
+        $set: { [`bookmarkslist.${postid}`]: true }
       }
-      if (f === 0) {
-        m.push(postid);
-      }
-      user.bookmarks = m;
-    }
-    user.bookmarkslist.set(`${postid}`,true);
-    user.save();
-    if (f == 1) {
-      return res.status(202).json({ msg: "exists" });
-    }
-    else {
-      return res.status(202).json({ msg: "ok" });
-    }
+    );
+
+    return res.status(202).json({
+      msg: alreadyBookmarked ? "exists" : "ok"
+    });
   } catch (error) {
     // Don't expose system details (Requirement 8.1)
     return res.status(500).json({ msg: "An error occurred" });
@@ -465,7 +480,7 @@ exports.likes = async (req, res) => {
       postid,
       userid
     } = req.body;
-    
+
     // Authorization check: verify user can only modify their own likes (Requirement 3.1)
     if (!req.user || !verifyOwnership(userid, req.user.id)) {
       logSecurityEvent(SecurityEventType.UNAUTHORIZED_ACCESS, {
@@ -477,38 +492,27 @@ exports.likes = async (req, res) => {
       });
       return res.status(403).json({ msg: "Unauthorized access" });
     }
-    
-    var mt = await User.findOne({ _id: userid }).select("likes likeslist");
-    if (!mt) {
+
+    // Check if post already exists in likes
+    const user = await User.findById(userid).select('likes');
+    if (!user) {
       return res.status(404).json({ msg: "User not found" });
     }
-    var m = mt.likes;
-    var f = 0;
-    if (m.length == 0) {
-      m.push(postid);
-    }
-    else {
-      for (var i = 0; i < m.length; i++) {
-        if (m[i] == postid) {
-          f = 1;
-          m.splice(i, 1);
-          m.push(postid);
-          break;
-        }
+
+    const alreadyLiked = user.likes.some(id => id.toString() === postid);
+
+    // Use atomic operation to prevent race conditions
+    await User.findByIdAndUpdate(
+      userid,
+      {
+        $addToSet: { likes: postid }, // Only adds if not exists
+        $set: { [`likeslist.${postid}`]: true }
       }
-      if (f == 0) {
-        m.push(postid);
-      }
-    }
-    mt.likes = m;
-    mt.likeslist.set(`${postid}`,true);
-    mt.save();
-    if (f == 1) {
-      return res.status(202).json({ msg: "exists" });
-    }
-    else {
-      return res.status(202).json({ msg: "ok" });
-    }
+    );
+
+    return res.status(202).json({
+      msg: alreadyLiked ? "exists" : "ok"
+    });
   } catch (error) {
     // Don't expose system details (Requirement 8.1)
     return res.status(500).json({ msg: "An error occurred" });
@@ -521,7 +525,7 @@ exports.showbookmark = async (req, res) => {
     if (!data) {
       return res.status(404).json({ msg: "User not found" });
     }
-    if(data.bookmarks.length==0){
+    if (data.bookmarks.length == 0) {
       return res.status(200).json({ msg: [] });
     }
     var arr = data.bookmarks;
@@ -582,7 +586,7 @@ exports.showLikemark = async (req, res) => {
     if (!data) {
       return res.status(404).json({ msg: "User not found" });
     }
-    if(data.likes.length==0){
+    if (data.likes.length == 0) {
       return res.status(200).json({ msg: [] });
     }
     var arr = data.likes;
@@ -654,7 +658,7 @@ exports.showmyposts = async (req, res) => {
     var userid = "";
     var _id = "";
     var view = "";
-    var likes="";
+    var likes = "";
     for (var i = 0; i < arr.length; i++) {
       var pd = await Post.findById(arr[i]);
       if (!pd) {
@@ -673,7 +677,7 @@ exports.showmyposts = async (req, res) => {
       imgp = ud.picture;
       name = ud.name;
       _id = arr[i];
-      var likes= pd.likes?pd.likes:0;
+      var likes = pd.likes ? pd.likes : 0;
       const utcTimeString = pd.createdAt;
       const date = new Date(utcTimeString);
       respon.push({
@@ -691,7 +695,7 @@ exports.showmyposts = async (req, res) => {
         createdAt: date,
         powner: true,
         book: false,
-        likes:likes,
+        likes: likes,
       })
     }
     data.save();
@@ -737,15 +741,15 @@ exports.showyourposts = async (req, res) => {
 exports.follow = async (req, res) => {
   try {
     const { id, id2 } = req.body;
-    
+
     // Prevent user from following themselves
     if (id === id2) {
       return res.status(400).json({ msg: "You cannot follow yourself" });
     }
-    
+
     const user = await User.findById(id);
     const user2 = await User.findById(id2);
-    
+
     if (!user || !user2) {
       return res.status(404).json({ msg: "User not found" });
     }
@@ -814,11 +818,11 @@ exports.unfollow = async (req, res) => {
     const { id, id2 } = req.body;
     const user = await User.findById(id);
     const user2 = await User.findById(id2);
-    
+
     if (!user || !user2) {
       return res.status(404).json({ msg: "User not found" });
     }
-    
+
     var mm = user2.followerscount
     if (mm - 1 < 0) {
       mm = 0;
@@ -888,7 +892,7 @@ exports.fetchfollowing = async (req, res) => {
 exports.changeabout = async (req, res) => {
   try {
     const { about, id } = req.body;
-    
+
     // Authorization check: verify user can only modify their own profile (Requirement 3.1)
     if (!req.user || !verifyOwnership(id, req.user.id)) {
       logSecurityEvent(SecurityEventType.UNAUTHORIZED_ACCESS, {
@@ -900,7 +904,7 @@ exports.changeabout = async (req, res) => {
       });
       return res.status(403).json({ msg: "Unauthorized access" });
     }
-    
+
     const user = await User.findById(id);
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
@@ -916,7 +920,25 @@ exports.changeabout = async (req, res) => {
 exports.searchresult = async (req, res) => {
   try {
     const { id2 } = req.body;
-    const data = await User.find({ "name": { $regex: '^' + `${id2}`, $options: 'i' } });
+
+    // Validate input
+    if (!id2 || typeof id2 !== 'string') {
+      return res.status(400).json({ msg: "Invalid search query" });
+    }
+
+    // Escape regex special characters to prevent NoSQL injection
+    const escapeRegex = (str) => {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    };
+
+    // Limit search length to prevent ReDoS attacks
+    const searchTerm = escapeRegex(id2.substring(0, 50));
+
+    // Use escaped regex with result limit
+    const data = await User.find({
+      "name": { $regex: '^' + searchTerm, $options: 'i' }
+    }).limit(20);
+
     if (data.length === 0) {
       return res.status(200).json({ msg: [] });
     }
@@ -964,7 +986,7 @@ exports.checkfollowing = async (req, res) => {
 exports.deletepost = async (req, res) => {
   try {
     const { postid, userid } = req.body;
-    
+
     // Authorization check: verify user can only delete their own posts (Requirement 3.1)
     if (!req.user || !verifyOwnership(userid, req.user.id)) {
       logSecurityEvent(SecurityEventType.UNAUTHORIZED_ACCESS, {
@@ -976,13 +998,13 @@ exports.deletepost = async (req, res) => {
       });
       return res.status(403).json({ msg: "Unauthorized access" });
     }
-    
+
     // Verify the post belongs to the user
     const post = await Post.findById(postid);
     if (!post) {
       return res.status(404).json({ msg: "Post not found" });
     }
-    
+
     if (!verifyOwnership(post.user, userid)) {
       logSecurityEvent(SecurityEventType.UNAUTHORIZED_ACCESS, {
         ip: req.ip,
@@ -993,7 +1015,7 @@ exports.deletepost = async (req, res) => {
       });
       return res.status(403).json({ msg: "You can only delete your own posts" });
     }
-    
+
     await Post.deleteOne({ _id: postid });
     var datas = await User.findById(userid);
     if (!datas) {
@@ -1023,7 +1045,7 @@ exports.login = async (req, res) => {
     const { temail, password } = req.body;
     // Find user by email
     const user = await User.findOne({ email: temail });
-    
+
     if (!user) {
       // Log failed login attempt - don't reveal if email exists (Requirement 8.1)
       logSecurityEvent(SecurityEventType.AUTH_FAILURE, {
@@ -1037,7 +1059,7 @@ exports.login = async (req, res) => {
         message: INVALID_CREDENTIALS_MSG,
       });
     }
-    
+
     // Check if Google user has set their own password
     // If they haven't, they need to either login with Google or set a password first
     if (user.googleId && !user.hasSetPassword) {
@@ -1054,7 +1076,7 @@ exports.login = async (req, res) => {
         message: INVALID_CREDENTIALS_MSG,
       });
     }
-    
+
     const check = await bcrypt.compare(password, user.password);
     if (!check) {
       // Log failed login attempt (Requirement 8.2)
@@ -1070,7 +1092,7 @@ exports.login = async (req, res) => {
         message: INVALID_CREDENTIALS_MSG,
       });
     }
-    
+
     // Log successful login (Requirement 8.2)
     logSecurityEvent(SecurityEventType.AUTH_SUCCESS, {
       ip: req.ip,
@@ -1079,7 +1101,7 @@ exports.login = async (req, res) => {
       userAgent: req.get('User-Agent'),
       message: 'Successful login'
     });
-    
+
     const token = generateToken({ id: user._id.toString() }, "15d");
     const responseData = {
       id: user._id,
@@ -1091,7 +1113,7 @@ exports.login = async (req, res) => {
       email: user.email,
       role: user.role || 'user',
     };
-    
+
     // Regenerate session to prevent session fixation attacks (Security Best Practice)
     // This creates a new session ID while preserving session data
     if (req.session && req.session.regenerate) {
@@ -1122,7 +1144,7 @@ exports.login = async (req, res) => {
 exports.uploadprofile = async (req, res) => {
   try {
     const { picture, about } = req.body;
-    
+
     // Authorization is already handled by authUser middleware
     // req.user.id is set by the auth middleware
     if (!req.user || !req.user.id) {
@@ -1280,12 +1302,12 @@ exports.changeUserPassword = async (req, res) => {
     if (!newPassword || newPassword.length < 6) {
       return res.status(400).json({ success: false, message: "Mật khẩu mới phải có ít nhất 6 ký tự" });
     }
-    
+
     const user = await User.findById(userid);
     if (!user) {
       return res.status(404).json({ success: false, message: "User không tồn tại" });
     }
-    
+
     // Verify old password
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
@@ -1299,12 +1321,12 @@ exports.changeUserPassword = async (req, res) => {
       });
       return res.status(400).json({ success: false, message: "Mật khẩu hiện tại không đúng" });
     }
-    
+
     // Use bcrypt cost factor of 12 for security (Requirement 2.5)
     const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_COST_FACTOR);
     user.password = hashedPassword;
     await user.save();
-    
+
     return res.status(200).json({ success: true, message: "Đổi mật khẩu thành công" });
   } catch (error) {
     // Don't expose system details (Requirement 8.1)

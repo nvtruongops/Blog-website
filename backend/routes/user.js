@@ -65,8 +65,13 @@ const {
   handleValidationErrors
 } = require("../middleware/validator");
 
-// Import rate limiter for authentication - Requirement 2.1
-const { authLimiter } = require("../middleware/security");
+// Import rate limiters - Requirements 2.1, 5.1-5.5
+const {
+  authLimiter,
+  passwordResetLimiter,
+  searchLimiter,
+  reportLimiter
+} = require("../middleware/security");
 
 // Import CSRF token handler - Requirement 6.2
 const { getCSRFToken, setCSRFToken } = require("../middleware/csrf");
@@ -92,9 +97,9 @@ router.post("/findOutUser", findOutUser);
 
 // Protected routes requiring authentication - Requirement 3.2
 router.post("/getallBookmarks", authUser, getallBookmarks);
-router.post("/sendResetPasswordCode", sendResetPasswordCode);
-router.post("/validateResetCode", validateResetCode);
-router.post("/changePassword", changePassword);
+router.post("/sendResetPasswordCode", passwordResetLimiter, sendResetPasswordCode);
+router.post("/validateResetCode", passwordResetLimiter, validateResetCode);
+router.post("/changePassword", passwordResetLimiter, changePassword);
 router.post("/setpassword", authUser, setPassword);
 router.post("/checkhaspassword", authUser, checkHasPassword);
 router.post("/changeuserpassword", authUser, changeUserPassword);
@@ -102,15 +107,15 @@ router.post("/changeuserpassword", authUser, changeUserPassword);
 // Bookmark routes - require authentication for state-changing operations
 router.post("/setbookmark", authUser, bookmark);
 router.post("/deletebookmark", authUser, deletebookmark);
-router.post("/checkbookmark", optionalAuth, checkbookmark);
+router.post("/checkbookmark", authUser, checkbookmark);
 
 // Likes routes - require authentication for state-changing operations
 router.post("/setlikes", authUser, likes);
 router.post("/getallLikes", authUser, getallLikes);
 router.post("/deletelikes", authUser, deletelikes);
-router.post("/checklikes", optionalAuth, checklikes);
+router.post("/checklikes", authUser, checklikes);
 
-router.post("/reportcontent", sendreportmails);
+router.post("/reportcontent", authUser, reportLimiter, sendreportmails);
 router.post("/countfollower", followercount);
 router.post("/countfollowing", followingcount);
 router.post("/showbookmarks", authUser, showbookmark);
@@ -125,7 +130,7 @@ router.post("/startfollow", authUser, follow);
 router.post("/unfollow", authUser, unfollow);
 router.post("/checkfollow", optionalAuth, checkfollowing);
 
-router.post("/searchresult", searchresult);
+router.post("/searchresult", searchLimiter, searchresult);
 
 // Profile update - require authentication
 router.post("/changeabout", authUser, changeabout);
@@ -209,11 +214,11 @@ router.get("/login/failed", (req, res) => {
 router.post("/login/success", async (req, res) => {
   if (req.isAuthenticated()) {
     const token = generateToken({ id: req.user._id.toString() }, "15d");
-    
+
     // Get fresh user data from DB
     const User = require("../models/User");
     const freshUser = await User.findById(req.user._id);
-    
+
     const responseData = {
       id: freshUser._id,
       name: freshUser.name,
@@ -224,7 +229,7 @@ router.post("/login/success", async (req, res) => {
       email: freshUser.email,
       role: freshUser.role || 'user',
     };
-    
+
     // Regenerate session to prevent session fixation attacks after OAuth login
     if (req.session && req.session.regenerate) {
       const passportData = req.session.passport;
@@ -265,7 +270,7 @@ router.get("/logout", async (req, res) => {
         console.error('Passport logout error:', err);
       }
     });
-    
+
     // Destroy the session completely to prevent session fixation
     if (req.session) {
       req.session.destroy((err) => {
@@ -274,7 +279,7 @@ router.get("/logout", async (req, res) => {
         }
       });
     }
-    
+
     // Clear all session-related cookies with proper options
     const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
     const cookieOptions = {
@@ -283,10 +288,10 @@ router.get("/logout", async (req, res) => {
       sameSite: isProduction ? 'none' : 'lax',
       path: '/'
     };
-    
+
     res.clearCookie('sessionId', cookieOptions);
     res.clearCookie('session', cookieOptions);
-    
+
     res.status(200).json({ success: true });
   } catch (error) {
     // Don't expose system details (Requirement 8.1)

@@ -9,6 +9,7 @@ const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const { logSecurityEvent, SecurityEventType } = require('../helper/securityLogger');
 
 /**
  * Configure Helmet security headers
@@ -26,8 +27,8 @@ const configureHelmet = () => {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: [
-          "'self'", 
-          "'unsafe-inline'", 
+          "'self'",
+          "'unsafe-inline'",
           "'unsafe-eval'",
           "https://cdnjs.cloudflare.com",
           "https://accounts.google.com",
@@ -56,7 +57,20 @@ const configureHelmet = () => {
     // X-XSS-Protection - Requirement 4.5
     xssFilter: true,
     // Hide X-Powered-By - Requirement 4.6
-    hidePoweredBy: true
+    hidePoweredBy: true,
+    // Additional security headers
+    referrerPolicy: {
+      policy: 'strict-origin-when-cross-origin'
+    },
+    permissionsPolicy: {
+      features: {
+        geolocation: ["'none'"],
+        camera: ["'none'"],
+        microphone: ["'none'"],
+        payment: ["'none'"],
+        usb: ["'none'"]
+      }
+    }
   });
 };
 
@@ -115,11 +129,75 @@ const uploadLimiter = rateLimit({
   }
 });
 
+/**
+ * Rate limiter for password reset requests
+ * Requirement: Prevent brute force password reset attacks
+ * @returns {Function} Rate limiter middleware
+ */
+const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3, // 3 attempts per 15 minutes
+  message: { message: 'Too many password reset attempts, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: false, // Count all attempts
+  handler: (req, res) => {
+    logSecurityEvent(SecurityEventType.RATE_LIMIT_EXCEEDED, {
+      ip: req.ip,
+      endpoint: `${req.method} ${req.originalUrl}`,
+      userAgent: req.get('User-Agent'),
+      message: 'Password reset rate limit exceeded'
+    });
+    res.status(429).json({
+      message: 'Too many password reset attempts, please try again later'
+    });
+  }
+});
+
+/**
+ * Rate limiter for search endpoints
+ * Requirement: Prevent search abuse and DoS
+ * @returns {Function} Rate limiter middleware
+ */
+const searchLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 20, // 20 searches per minute
+  message: { message: 'Too many search requests, please slow down' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      message: 'Too many search requests, please slow down'
+    });
+  }
+});
+
+/**
+ * Rate limiter for report submissions
+ * Requirement: Prevent report spam
+ * @returns {Function} Rate limiter middleware
+ */
+const reportLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // 5 reports per hour
+  message: { message: 'Too many reports submitted, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      message: 'Too many reports submitted, please try again later'
+    });
+  }
+});
+
 module.exports = {
   configureHelmet,
   apiLimiter,
   authLimiter,
   uploadLimiter,
+  passwordResetLimiter,
+  searchLimiter,
+  reportLimiter,
   mongoSanitize,
   xss,
   hpp
